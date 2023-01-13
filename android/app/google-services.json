@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "855618612359",
+    "project_id": "qlearning-4ec55",
+    "storage_bucket": "qlearning-4ec55.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855618612359:android:fc3503e3bb9d65feb95c22",
+        "android_client_info": {
+          "package_name": "com.qlearningstudent"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "855618612359-hplhhvucgcie2m1rehkmuvplfuoe275n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qlearningstudent",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "855618612359-l8odtq0lgqlf92ohcgvupg0u3us0i8ar.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qlearningstudent",
+            "certificate_hash": "b7c7063ed9096f55f8f8fe97af4198606624bcc1"
+          }
+        },
+        {
+          "client_id": "855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnH8JFFeT5sZ9UVb8DQW_Rdfxar-SZYbo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
