@@ -39,11 +39,11 @@ const Review = () => {
         }
      } else {
        console.log("GetR error :" + response.message);
-       alert("GetR error :" + response.message);
+      //  alert("GetR error :" + response.message);
      }
     } catch (err) {
      console.log("GetR error :" + err.message);
-     alert("GetR error :" + err.message);
+    //  alert("GetR error :" + err.message);
     }
    };
 

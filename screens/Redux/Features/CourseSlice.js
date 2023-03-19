@@ -12,6 +12,10 @@ const initialState = {
   AssessmentData:'',
   FullCourseData: '',
   AttendAssessment:'',
+  BuyNowCourse: {},
+  ViewIndependentAssessmentCode: '',
+  IsRetryIndependentAssessment: false,
+  JoinDemoClassData: {}
 };
 
 export const courseSlice = createSlice({
@@ -51,6 +55,18 @@ export const courseSlice = createSlice({
     setAttendAssessment: (state, action) => {
       state.AttendAssessment = action.payload;
     },
+    setBuyNowCourse: (state, action) => {
+      state.BuyNowCourse = action.payload;
+    },
+    setViewIndependentAssessmentCode: (state, action) => {
+      state.ViewIndependentAssessmentCode = action.payload;
+    },
+    setIsRetryIndependentAssessment: (state, action) => {
+      state.IsRetryIndependentAssessment = action.payload;
+    },
+    setJoinDemoClassData: (state, action) => {
+      state.JoinDemoClassData = action.payload;
+    },
   },
 });
 
@@ -66,5 +82,9 @@ export const {
   setAssessmentData,
   setFullCourseData,
   setAttendAssessment,
+  setBuyNowCourse,
+  setViewIndependentAssessmentCode,
+  setIsRetryIndependentAssessment,
+  setJoinDemoClassData,
 } = courseSlice.actions;
 export default courseSlice.reducer;

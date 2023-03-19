@@ -32,7 +32,7 @@ const CourseCard = ({props}) => {
   },[]);
   return (
     <View>
-      <HStack style={styles.CourseCard} space={3}>
+      <HStack style={styles.CourseCard} space={2}>
         <Center>
           <Image
             style={styles.cardImg}
@@ -44,19 +44,20 @@ const CourseCard = ({props}) => {
         <VStack style={styles.CardContent}>
           <View style={{justifyContent:"space-between", flexDirection:"row"}}>
             <Text
+              noOfLines={2}
               style={{
                 fontSize: 12,
                 fontWeight: 'bold',
                 color: '#000000',
-                maxWidth: width / 2.5,
+                maxWidth: width*0.4,
               }}>
             {courseTitle}
             </Text>
               {data.isLive
                 ?
-                <Text numberOfLines={2} style={{fontSize: 13, backgroundColor:"#EDAEC0", paddingHorizontal:5, paddingVertical:1, borderRadius:5, bottom:5, color: '#FFF',}} >
-                  Live
-                </Text>
+                <View>
+                  <Text pr={2} pl={2} borderRadius={20} style={{fontSize:10, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text>
+                </View>
                 :
                 <></>
               }
@@ -130,7 +131,7 @@ const CourseCard = ({props}) => {
                 <Text
                   style={{fontSize: 10, fontWeight: '600'}}
                   color={'greyScale.800'}>
-                  {props.learners.length} Learners
+                  {props.learnersCount > 0 ? props.learnersCount : 0} Learners
                 </Text>
               </HStack>
             </HStack>
@@ -149,15 +150,22 @@ const CourseCard = ({props}) => {
             size={4}
             alt={'completed'}
             />
-            <Text fontSize={12} color={'greyScale.800'}>Completed!</Text>
+            <Text fontSize={12} bold color={'black'}>Completed!</Text>
           </HStack>
-        : <Progress
+        : 
+          <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+            {/* {Number.isInteger(cartA.taxValue) ? cartA.taxValue : cartA.taxValue.toFixed(2)} */}
+            <Text style={{marginRight:10, fontSize: 10, fontWeight: '600'}}>{Number.isInteger(data.courseProgressPercentage) ? data.courseProgressPercentage : data.courseProgressPercentage.toFixed(2)}%</Text>
+            <Progress
             size={'xs'}
+            style={{width:width*0.5}}
             mb={1}
             mt={1}
             value={data.courseProgressPercentage}
             color={'primary.100'}
-          />}
+          />
+          </View>
+          }
          
         </VStack>
       </HStack>
@@ -169,7 +177,6 @@ export default CourseCard;
 const styles = StyleSheet.create({
   CourseCard: {
     alignItems: 'center',
-    maxHeight: height / 9,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
     shadowColor: 'rgba(0, 0, 0, 0.03)',
@@ -182,11 +189,11 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   cardImg: {
-    height: height / 11,
-    width: width / 5,
+    height: width*0.17,
+    width: width*0.27,
     borderRadius: 5,
   },
   CardContent: {
-    minWidth: width / 1.7,
+    width:width*0.59,
   },
 });

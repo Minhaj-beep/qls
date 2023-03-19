@@ -21,6 +21,7 @@ const GetPurchasedCourses = async (email) => {
     BaseURL + 'api/v1/purchaseHistory',
     requestOptions,
   );
+  console.log(response)
 
   return response.json();
 };

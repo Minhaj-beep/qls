@@ -160,9 +160,7 @@ const CourseCard = gestureHandlerRootHOC(items => {
           </Text>
           {item.isLive
             ?
-            <Text numberOfLines={2} style={{fontSize: 13, backgroundColor:"#EDAEC0", paddingHorizontal:5, paddingVertical:1, borderRadius:5, bottom:5, color: '#FFF',}} >
-              Live
-            </Text>
+            <Text pr={2} pl={2} borderRadius={20} style={{fontSize:10, paddingHorizontal:5, paddingVertical:1, borderRadius:10,marginBottom:2, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text>
             :
             <></>
           }

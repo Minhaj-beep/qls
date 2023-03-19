@@ -6,6 +6,7 @@ import {GetPaymentHistory} from '../Functions/API/GetPaymentHistory';
 import {useSelector, useDispatch} from 'react-redux';
 import { Text,HStack,VStack, Modal,useToast,Button,Divider } from 'native-base';
 import moment from 'moment';
+import { setLoading } from '../Redux/Features/authSlice';
 
 const {width, height} = Dimensions.get('window');
 
@@ -15,6 +16,7 @@ const PaymentHistory = ({navigation}) => {
   const [History, setHistory] = useState();
   const [showModal, setShowModal] = useState(false);
   const [ModalData, setModalData] =useState();
+  const dispatch = useDispatch()
   const toast = useToast();
 
   const AppBarContent = {
@@ -30,6 +32,7 @@ const PaymentHistory = ({navigation}) => {
   },[]);
 
   const GetPHistory = async() => {
+    dispatch(setLoading(true))
     try {
       let response = await GetPaymentHistory(email);
       if ( response.status === 200 && response.data.length !== 0) {
@@ -43,6 +46,7 @@ const PaymentHistory = ({navigation}) => {
       alert("GetPHistory :" + error.message);
       console.log("GetPHistory :" + error.message);
     }
+    dispatch(setLoading(false))
   };
 
   const RenderPaymentCard = ({props}) => {

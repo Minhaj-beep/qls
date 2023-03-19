@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
-  TouchableOpacity,
+  TouchableOpacity, Linking,
 } from 'react-native';
 import React, {useState, useEffect, useRef} from 'react';
 import {
@@ -23,7 +23,6 @@ import {
   Progress,
   Box,
   Modal,
-  Linking,
 } from 'native-base';
 import Navbar from '../components/Navbar';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -34,7 +33,7 @@ import Review from './SCTabs/Review';
 import FAQ from './SCTabs/FAQ';
 import {useSelector, useDispatch} from 'react-redux';
 import {setLoading} from '../Redux/Features/authSlice';
-import {setLiveClassD, setAssessmentData,setFullCourseData} from '../Redux/Features/CourseSlice';
+import {setLiveClassD, setBuyNowCourse, setAssessmentData,setFullCourseData} from '../Redux/Features/CourseSlice';
 import { setInstructor,setInstructorCourses} from '../Redux/Features/InstructorSlice';
 import {BaseURL} from '../StaticData/Variables';
 import {ChapterDD,LiveClassD} from '../StaticData/data';
@@ -51,6 +50,10 @@ import VideoPlayer from 'react-native-video-controls';
 import ResoucreFile from '../components/Courses/ResourceFile';
 import RenderHtml from 'react-native-render-html';
 import ClassTime from './SCTabs/ClassTime';
+import moment from 'moment';
+import { RequestDemoClass } from '../Functions/API/RequestDemoClass'
+import { GetDemoReqbyCourseCode } from '../Functions/API/GetDemoClassListbyCourseCode';
+import { setJoinDemoClassData } from '../Redux/Features/CourseSlice';
 
 
 const {width, height} = Dimensions.get('window');
@@ -65,9 +68,11 @@ const SCView = ({navigation}) => {
   const CourseData = CData.CDD;
   const [InstructorName, setInstructorName] = useState('No Name');
   const [profileImgPath, setprofileImgPath ] = useState(null);
+  const [instructorEmail, setInstructorEmail] = useState(null)
   const email = useSelector(state => state.Auth.Mail);
   const [CourseTitle, setCourseTitle] = useState();
   const [CourseD, setCourseD] = useState();
+  const [allCourseData, setAllCourseData] = useState([])
   const [ChapterD, SetChapterD] = useState();
   const [LiveClass, setLiveClass] = useState();
   const [Instructor, setIns] = useState();
@@ -81,6 +86,41 @@ const SCView = ({navigation}) => {
   const [ShowResources, SetShowResources] = useState(false);
   const [purchasedCourse, setPurchasedCourse] = useState(null)
   const [stateLoading, setStateLoading] = useState(true)
+  const [courseDuration, setCourseDuration] = useState(null)
+  const JWT = useSelector(state => state.Auth.JWT);
+  const [isDemoClassAvailable, setIsDemoClassAvailable] = useState(false)
+  const [DemoClassData, setDemoClassData] = useState({})
+  // console.log('JWTTTTTTTTTTTTTTTTTTTTTTTTTTT:', JWT)
+  useEffect(()=>{
+    let sec = 0
+    let check = setInterval(()=>{
+      getDemoReqbyCourseCode()
+      sec =+ 1
+      console.log(sec)
+    },5000)
+
+    return () => {
+      clearInterval(check)
+    }
+  },[])
+
+  const getDemoReqbyCourseCode = async () => {
+    try {
+      let response = await GetDemoReqbyCourseCode(JWT, CourseData.courseCode);
+      if (response.status === 200 && response.message !== 'Not Available') {
+          setIsDemoClassAvailable(true)
+          setDemoClassData(response.data)
+          console.log(response)
+      } else {
+        console.log(response)
+        // alert("getDemoClassListbyCourseCode 1 " + response.message);
+        console.log("getDemoReqbyCourseCode 1 " + response.message);
+      }
+     } catch (err) {
+      console.log("getDemoReqbyCourseCode 2 " + err.message);
+      // alert('getDemoClassListbyCourseCode 2 ' + err.message);
+     }
+  }
   
   const AppBarContent = {
     title: ' ',
@@ -104,12 +144,41 @@ const renderersProps = {a: {onPress: OpenLink}};
 const OverviewSource = {
   html: `<head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body{color:black; background-color: yellow}
+        </style>
         </head> 
         <body>${CourseData.courseOverview}</body>`,
 };
 // if(CourseD){
 //   console.log("Purcaged course data: " + CourseD)
 // }
+const sendMailToInstructor = async () => {
+    await Linking.openURL(`mailto:${instructorEmail}`)
+}
+
+const requestDemoClass = async () => {
+  if(allCourseData.isDemo === false || allCourseData.isDemo !== undefined){
+    //
+    console.log(CourseData)
+    try {
+      let response = await RequestDemoClass(email, CourseData.courseCode);
+      if (response.status === 200) {
+          console.log('this is da data: ' + response)
+          GetCourseDetails()
+          console.log('PC courses retrieved successfully');
+      } else {
+        alert(response.message);
+        console.log("requestDemoClass 1 " + response.message);
+      }
+     } catch (err) {
+      console.log("requestDemoClass 2 " + err.message);
+      alert('Server error please try again!');
+     }
+  } else {
+    console.log('Opps')
+  }
+}
 
 const AddTC = async () => {
   try {
@@ -139,8 +208,8 @@ const AddTC = async () => {
          setPurchasedCourse(response.data);
          console.log('Course code : ',CData.CDD.courseCode)
          response.data.map((i)=>{
-          if(i.courseCode === CData.CDD.courseCode){
-            setType(true)
+           if(i.courseCode === CData.CDD.courseCode){
+             setType(true)
           }
          })
          console.log('PC courses retrieved successfully');
@@ -149,6 +218,7 @@ const AddTC = async () => {
        console.log("GetPC error: " + response.message);
      }
      setStateLoading(false)
+     dispatch(setLoading(false))
     } catch (err) {
      console.log("GetPC error: " + err.message);
     }
@@ -158,7 +228,7 @@ const AddTC = async () => {
   useEffect(() => {
     console.log('Recorded Course details!!');
     if (CourseData) {
-      // console.log(CourseData)
+      console.log('CourseData ========> ', CourseData)
       setCourseD(CourseData);
       SetDiff();
       setCourseProgress(CourseData.courseProgressPercentage);
@@ -227,6 +297,7 @@ const AddTC = async () => {
       second: Review,
       third: FAQ,
     });
+    console.log('Overview ===========> ', OverTest)
 
       let renderTabBar = props => {
         return (
@@ -253,6 +324,7 @@ const AddTC = async () => {
           minHeight: height / 2,
           maxHeight: height * 4,
           backgroundColor: '#FFF',
+          // color:"#000"
         }}
       />
       );
@@ -260,21 +332,26 @@ const AddTC = async () => {
     
     // const currency = CourseD.currency === 'INR' ? '₹' : '$';
   const GetCourseDetails = async(mail, code) =>{
+    dispatch(setLoading(true))
     try {
-      let response = await GetCourseByCode(mail, code);
+      let response = await GetCourseByCode(JWT, code);
       if (response.status === 200) {
+        console.log('========Is demo present===========>', response.data)
         dispatch(setFullCourseData(response.data));
+        setAllCourseData(response.data)
         let FData = response.data;
+        if(response.data.totalCourseDuration)
+           setCourseDuration(response.data.totalCourseDuration)
          if (FData.chapterList.length > 0) {
           SetChapterD(FData.chapterList);
          }
       } else {
         console.log("GetCourseDetails: " + response.message);
-        alert( "GetCourseDetails: " + response.message);
+        // alert( "GetCourseDetails: " + response.message);
       }
     } catch (error) {
       console.log("GetCourseDetails: " + error.message);
-      alert("GetCourseDetails: " + error.message);
+      // alert("GetCourseDetails: " + error.message);
     }
   };
 
@@ -311,7 +388,7 @@ const AddTC = async () => {
             if (data[0].liveClassList) {
               let LData = data[0].liveClassList;
           if (LData.length !== 0){
-            // console.log('Live class data: ', LData)
+            // console.log('Live class data::::::::::::::::: ', LData)
             setLiveClass(LData);
             let ActiveClass = LData.filter(SetLCData);
             if (ActiveClass.length !== 0) {
@@ -348,6 +425,8 @@ const AddTC = async () => {
        dispatch(setInstructor(data));
        if (data !== null){
         setInstructorName(data.fullName);
+        setInstructorEmail(data.instructorEmail)
+        // console.log(data, 'Datattttttttttttttttttttt')
           if (data.profileImgPath)
           {
             setprofileImgPath(data.profileImgPath);
@@ -375,6 +454,7 @@ const AddTC = async () => {
      if (response.status === 200) {
       if (response.data.length !== 0) {
         let data = response.data;
+        console.log('Finding all instructor destails: ', data.totalLearners, ' totalLearners and ', data.totalCourses, 'totalCourses')
         setCourses(data);
         dispatch(setInstructorCourses(data));
       } else {
@@ -444,6 +524,7 @@ const AddTC = async () => {
         <RenderHtml
           contentWidth={width / 3}
           source={OverviewSource}
+          baseStyle={{color:"#8C8C8C"}}
           renderersProps={renderersProps}
         />
         {/* <Text>yeet</Text> */}
@@ -454,6 +535,7 @@ const AddTC = async () => {
 
 
   const CHeader = (section, index) => {
+    // console.log('Sectionnnnnnnnnnnnnnnnnnnnnn: ', section)
     return (
       <VStack space={1} mt={2}>
         <HStack alignItems={'center'} justifyContent={'space-between'}>
@@ -470,10 +552,16 @@ const AddTC = async () => {
             color="#000"
           />
         </HStack>
-
-        <Text color={'greyScale.800'} fontSize={12} fontWeight={'bold'}>
-          10:20:01
+        {section.chapterDuration ? 
+          <Text color={'greyScale.800'} fontSize={12} fontWeight={'bold'}>
+          {new Date(section.chapterDuration*1000).toISOString().substr(11, 8)}
         </Text>
+        :
+        <Text color={'greyScale.800'} fontSize={12} fontWeight={'bold'}>
+          00:00:00
+        </Text>
+        }
+        
         {ChapterD.length !== index + 1 && index !== ActiveSessions[0] ? (
           <Divider mt={1} bg={'greyScale.800'} thickness={1} />
         ) : null}
@@ -564,7 +652,7 @@ const AddTC = async () => {
                       color={'greyScale.800'}
                       fontSize={12}
                       fontWeight={'bold'}>
-                      10:20:01
+                      {new Date(data.lessonDuration*1000).toISOString().substr(11, 8)}
                     </Text> : null}
                   </VStack>
                 </HStack>
@@ -683,7 +771,8 @@ const AddTC = async () => {
                 </Text>
               </HStack>
             </HStack> : <></> }
-
+{/* {console.log(type, 'type', ActiveLCData, 'ActiveLCData', IsLCActive, 'IsLCActive')} */}
+          {/* {type && ActiveLCData && IsLCActive === true ? */}
           {type && ActiveLCData && IsLCActive === true ?
             <TouchableOpacity
                 onPress={()=> {
@@ -732,14 +821,54 @@ const AddTC = async () => {
                   {CourseD.currency === 'INR' ? '₹' : '$'} {CourseD.fee}
                 </Text>
               </VStack>
-              <Button
-                colorScheme={'primary'}
-                _text={{fontSize: 12}}
-                pl={4}
-                pr={4}>
-                Request For Demo class
-              </Button>
+              {
+                Object.keys(allCourseData).length > 0 ?
+                <>
+                  {console.log(allCourseData.isDemoRequested, "============WHY=================")}
+                  {
+                    // allCourseData.isDemo === false || allCourseData.isDemo !== undefined ?
+                    allCourseData.isDemo && !isDemoClassAvailable?
+                    <Button
+                      isDisabled={allCourseData.isDemoRequested}
+                      colorScheme={'primary'}
+                      _text={{fontSize: 12}}
+                      pl={4}
+                      onPress={()=>requestDemoClass()}
+                      pr={4}>
+                      Request For Demo class
+                    </Button>
+                    : null
+                  }
+                </> : null
+              }
             </HStack> : null}
+            {
+              isDemoClassAvailable ? 
+              <TouchableOpacity onPress={()=>{
+                dispatch(setJoinDemoClassData(DemoClassData))
+                navigation.navigate('JoinDemoClass')
+              }}>
+                <HStack
+                  mt={2}
+                  justifyContent={'space-between'}
+                  bg={'primary.100'}
+                  p={4}
+                  borderRadius={8}>
+                  <Text fontSize={16} color={'secondary.50'}>
+                    Join in Demo Class
+                  </Text>
+                  <HStack alignItems={'center'}>
+                    {/* <Icon name="time" size={20} color="#F0E1EB" /> */}
+                    <Image
+                      source={require('../../assets/Courses/streaming_pink.png')}
+                      alt="Stream"
+                      size={7}
+                    />
+                  </HStack>
+                </HStack>
+              </TouchableOpacity>
+              : null
+            }
             <VStack space={4} mt={4}>
               {purchasedCourse !== null ? console.log('purchasedCourse') : console.log('not data')}
               {!type ?
@@ -790,8 +919,9 @@ const AddTC = async () => {
                   alignSelf={'center'}
                   _text={{fontSize: 13}}
                   onPress={()=>{
-                    AddTC();
-                    navigation.navigate('Cart');
+                    // AddTC();
+                    dispatch(setBuyNowCourse(CourseData))
+                    navigation.navigate('BuyNow');
                   }}
                   >
                   Buy Now
@@ -809,7 +939,13 @@ const AddTC = async () => {
                     />
                   </Box>
                   </Center>
-                  <Text color={'#000'} fontSize={12}>{CourseProgress}%</Text>
+                  {CourseProgress ? 
+                  <Text color={'#000'} fontSize={12}>{Number.isInteger(CourseProgress) ? CourseProgress : CourseProgress.toFixed(2) }%</Text>
+                  :
+                  <Text color={'#000'} fontSize={12}>0%</Text>
+                  }
+                  {/* {Number.isInteger(cartA.taxValue) ? cartA.taxValue : cartA.taxValue.toFixed(2)} */}
+                  
                 </HStack>
                 <HStack justifyContent={'space-between'} alignItems={'center'}>
                   <Text color={'#000'} fontSize={14} fontWeight={'bold'}>Resource</Text>
@@ -835,6 +971,13 @@ const AddTC = async () => {
                 </HStack>
               </VStack>}
 
+              {type ?
+                <Button mt={0} bg={'primary.50'} _text={{ color:'secondary.50', fontSize:14, fontWeight:'bold' }} _pressed={{backgroundColor:'#F0E1EB', opacity:'0.5' }} onPress={ ()=> sendMailToInstructor()}>
+                    Message to Instructor
+                </Button>
+                : <></>
+              }
+
               <VStack bg="white.100" mt={2}>
                 <HStack
                   justifyContent={'space-between'}
@@ -846,9 +989,13 @@ const AddTC = async () => {
                   </Text>
                   <HStack alignItems={'center'}>
                     <Icon name="time" size={20} color="#F0E1EB" />
-                    <Text fontSize={14} color={'secondary.50'}>
-                      {CourseD.timeDuration}
-                    </Text>
+                    {/* {console.log('CourseD ================================>' ,courseDuration)} */}
+                    {courseDuration !== null || courseDuration !== 'undefined' ?
+                      <Text fontSize={14} color={'secondary.50'}>
+                        {} {new Date(courseDuration*1000).toISOString().substr(11, 8)}
+                      </Text>
+                    : <></>
+                    }
                   </HStack>
                 </HStack>
 
@@ -890,8 +1037,15 @@ const AddTC = async () => {
                 {
                   LiveClass ? (
                     LiveClass.map((data, i) =>{
+                      console.log('data', data)
                       return (
-                        <View key={i}>
+                        <TouchableOpacity
+                        onPress={()=> {
+                          // console.log(LiveClassD)
+                          dispatch(setLiveClassD(ActiveLCData));
+                          navigation.navigate('LiveClass', { LiveClassData : data });
+                        }}
+                        key={i}>
                           <HStack justifyContent={'space-between'} mt={3} mr={3} ml={3}>
                           <VStack>
                             <Text color={'#000'} fontSize={14} fontWeight={'bold'}>
@@ -901,7 +1055,7 @@ const AddTC = async () => {
                               color={'greyScale.800'}
                               fontSize={12}
                               fontWeight={'bold'}>
-                              10:20:01
+                              {data.date.substr(11, 8)}  {data.date.substr(0, 10)} 
                             </Text>
                           </VStack>
                           <Icon
@@ -912,7 +1066,7 @@ const AddTC = async () => {
                           />
                           </HStack>
                           { LiveClass.length !== i + 1 ? <Divider mt={1} bg={'greyScale.800'} thickness={1} mb={2} /> : null }
-                        </View>
+                        </TouchableOpacity>
                       );
                     })
                   )
@@ -920,8 +1074,11 @@ const AddTC = async () => {
                 {/* { LiveClass === null ? <Text color={'greyScale.800'} fontSize={12} p={4} alignSelf="center">You don't have any Live Videos</Text> : null} */}
 
               </VStack>
+              {console.log(`[
+                Wha is type: ${type}
+              ]`)}
 
-             { type  ? <RenderTabs01/> : <RenderTabs02/>}
+             { CourseData.isLive  ? <RenderTabs01/> : <RenderTabs02/>}
              {/* <RenderTabs02/> */}
             </VStack>
 
@@ -935,13 +1092,13 @@ const AddTC = async () => {
                 </Container>
                 <VStack space={1}>
                     <Text color={'#000'} fontSize={16} fontWeight={'bold'}>{InstructorName}</Text>
-                  <HStack space={1} alignSelf={'flex-start'}>
+                  <HStack space={1} mt={1} alignSelf={'flex-start'}>
                     {
-                      [...Array(3)].map((e, i) =>{
+                      [...Array(5)].map((e, i) =>{
                           return (
                             <Image
                               key={i}
-                              source={require('../../assets/Home/star.png')}
+                              source={require('../../assets/Home/unstar.png')}
                               alt="rating"
                               size="3"
                             />
@@ -949,6 +1106,7 @@ const AddTC = async () => {
                         }
                       )
                     }
+                    <Text  style={{fontSize: 11, bottom:3, color:"#8C8C8C"}}>0(0)</Text>
                   </HStack>
                 </VStack>
               </HStack>
@@ -957,15 +1115,16 @@ const AddTC = async () => {
                   <Image source={require('../../assets/courses.png')} alt="courses" size={8}/>
                   <Text color={'#000'} fontSize={14}>Total Courses</Text>
                 </HStack>
-                { courses ? <Text color={'#000'} fontSize={14}>{courses.length}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
+                { courses ? <Text color={'#000'} fontSize={14}>{courses.totalCourses}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
               </HStack>
               <HStack justifyContent={'space-between'} alignItems={'center'}>
                 <HStack space={3} alignItems={'center'}>
                   <Image source={require('../../assets/graduate.png')} alt="courses" size={7}/>
                   <Text color={'#000'} fontSize={14}>Total Learners</Text>
                 </HStack>
-                {courses ? <Text color={'#000'} fontSize={14}>{courses[0].learners.length}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
+                {courses ? <Text color={'#000'} fontSize={14}>{courses.totalLearners}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
               </HStack>
+
               <Button mt={2} bg={'secondary.50'} _text={{ color:'#364b5b', fontSize:14, fontWeight:'bold' }} _pressed={{backgroundColor:'#F0E1EB', opacity:'0.5' }} onPress={()=> navigation.navigate('InstructorProfile')}>
                   View Profile
               </Button>

@@ -59,9 +59,9 @@ const ProfileSettings = props => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('Tabs', {screen: 'Home'})}>
+        onPress={() => navigation.navigate('NotificationsManagement')}>
         <HStack style={styles.ProfileSettings}>
-          <Text style={styles.ProfileText}>Notification Management</Text>
+          <Text style={styles.ProfileText}>Notification</Text>
           <IconButton
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />

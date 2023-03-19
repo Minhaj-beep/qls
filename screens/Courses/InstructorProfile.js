@@ -45,7 +45,7 @@ const InstructorProfile = ({navigation}) => {
       if (Instructor.length !== 0) {
         setIns(Instructor);
         setInstructorName(Instructor.fullName);
-        console.log(Instructor);
+        console.log('This is instructor data: ', Instructor);
         if (Instructor.profileImgPath) {
           setprofileImgPath(Instructor.profileImgPath);
           console.log(Instructor.profileImgPath);
@@ -120,9 +120,15 @@ const InstructorProfile = ({navigation}) => {
                   alt="courses"
                   size={4}
                 />
-                <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
-                  {ICourses ? ICourses[0].learners.length : '0'} Learners
-                </Text>
+                {
+                  ICourses ?
+                  <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
+                    {ICourses.totalLearners > 0 ? ICourses.totalLearners : '0'} Learners
+                  </Text>
+                  :
+                  <></>
+
+                }
               </HStack>
               <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
                 {!Instructor.yearsOfExperience ? '0 ' : Instructor.yearsOfExperience} Years Experience
@@ -153,9 +159,12 @@ const InstructorProfile = ({navigation}) => {
                   alt="courses"
                   size={4}
                 />
-                <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
-                  {ICourses ? ICourses[0].totalCourses : '0'} Courses
-                </Text>
+                {ICourses ?
+                  <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
+                    {ICourses.totalCourses > 0 ? ICourses.totalCourses : '0'} Courses
+                  </Text>
+                  : <></>
+                }
               </HStack>
               {Ins ? (
                 <Text color={'#091B12'} fontSize={14} fontWeight={'bold'}>
@@ -174,7 +183,8 @@ const InstructorProfile = ({navigation}) => {
           </HStack>
           {Ins ? (
             <HStack space={2}>
-              {Ins.facebook ? (
+              {console.log(Ins.facebook, 'Is this a vaild url')}
+              {Ins.facebook && Ins.facebook !== 'https://www.facebook.com/' ? (
                 <TouchableOpacity onPress={() => OpenLink(Ins.facebook)}>
                   <Image
                     source={require('../../assets/Social/facebook.png')}
@@ -183,7 +193,7 @@ const InstructorProfile = ({navigation}) => {
                   />
                 </TouchableOpacity>
               ) : null}
-              {Ins.instagram ? (
+              {Ins.instagram && Ins.instagram !== 'https://www.instagram.com/' ? (
                 <TouchableOpacity onPress={() => OpenLink(Ins.instagram)}>
                   <Image
                     source={require('../../assets/Social/instagram.png')}
@@ -192,7 +202,7 @@ const InstructorProfile = ({navigation}) => {
                   />
                 </TouchableOpacity>
               ) : null}
-              {Ins.linkedin ? (
+              {Ins.linkedin && Ins.linkedin !== 'https://www.linkedin.com/'  ? (
                 <TouchableOpacity onPress={() => OpenLink(Ins.linkedin)}>
                   <Image
                     source={require('../../assets/Social/linkedin.png')}
@@ -201,7 +211,7 @@ const InstructorProfile = ({navigation}) => {
                   />
                 </TouchableOpacity>
               ) : null}
-              {Ins.twitter ? (
+              {Ins.twitter && Ins.twitter !== 'https://twitter.com/' ? (
                 <TouchableOpacity onPress={() => OpenLink(Ins.twitter)}>
                   <Image
                     source={require('../../assets/Social/Twitter.png')}
@@ -268,7 +278,7 @@ const InstructorProfile = ({navigation}) => {
           </View>
           <View>
             <Text color={'#091B12'} fontSize={16} fontWeight={'bold'} mb={1}>
-              About
+              About Instructor
             </Text>
             {Ins ? (
               <View>
@@ -305,12 +315,12 @@ const InstructorProfile = ({navigation}) => {
 
           <View>
             <Text color={'#091B12'} fontSize={16} fontWeight={'bold'} mb={1}>
-              Courses
+              Courses ({ICourses.totalCourses > 0 ? ICourses.totalCourses : '0'})
             </Text>
             {ICourses ? (
               <VStack space={1}>
-                {console.log(ICourses)}
-                {ICourses.map((data, index) => {
+                {console.log(ICourses, 'is it this')}
+                {ICourses.courseList.map((data, index) => {
                   return (
                     <TouchableOpacity
                       key={index}

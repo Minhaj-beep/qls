@@ -13,22 +13,21 @@ import {useDispatch, useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { GetCart } from '../Functions/API/GetCart';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BaseURL } from '../StaticData/Variables';
+import { setNotificationCount } from '../Redux/Features/authSlice';
 
 const {width, height} = Dimensions.get('window');
 
 const AppBar = ({props}) => {
+  const dispatch = useDispatch()
   const AppBarData = JSON.parse(JSON.stringify(props));
-  const Profile = useSelector(state => state.Auth.ProfileData);
-  const Img = Profile.profileImgPath;
+  const userMail = useSelector(state => state.Auth.Mail);
   const ProfileI = useSelector(state => state.Auth.ProfileImg);
-  const [ProfileImg, setProfileImg] = useState(false);
-  //  const ProfileImg = false;
-  //   const NotiCount = useSelector(state => state.login.NCount);
+  const ProfileD = useSelector(state => state.Auth.ProfileData);
+  const NotificationCount = useSelector(state => state.Auth.NotificationCount);
+  const [ProfileImg, setProfileImg] = useState(ProfileD.profileImgPath);
   const navigation = props.navigation;
   const [NCount, setNCount] = useState(0);
-
-  // const dispatch = useDispatch()
-  // console.log(String(NotiCount).length);
 
     useEffect(() => {
       const timer = setInterval(()=>{
@@ -38,7 +37,8 @@ const AppBar = ({props}) => {
     },[]);
 
   useEffect(() => {
-    setProfileImg(ProfileI);
+    // setProfileImg(ProfileI);
+    GetNotification()
   }, [ProfileI]);
 
   const GetCartCount = async(mail) => {
@@ -77,6 +77,33 @@ const AppBar = ({props}) => {
       });
   };
 
+  const GetNotification = () =>{
+    const API = BaseURL+'/v1/notifications/getNotifications'
+    var requestOptions = {
+      method:'GET',
+      headers:{
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'gmailUserType':'STUDENT',
+        'token':userMail
+      }
+    }
+    fetch(API, requestOptions)
+    .then(response => response.json())
+    .then(result => {
+      if(result.status === 200)
+      {
+        let re = result.data;
+        dispatch(setNotificationCount(re.count))
+      }else if(result.status > 200){
+        console.log('GetNotification error: 1 ',result.message);
+      }
+    }).catch(error =>{
+      console.log(error, 'GetNotification error 2')
+      // GetNotification()
+    })
+  }
+
   return (
     <SafeAreaView>
       <VStack>
@@ -95,6 +122,31 @@ const AppBar = ({props}) => {
           </HStack>
 
           <HStack alignItems={'center'} >
+            <VStack marginRight={0}>
+              {NotificationCount !== null && NotificationCount !== 0 ? (
+                <Badge // bg="red.400"
+                  bg="primary.100"
+                  rounded="full"
+                  mb={-5}
+                  zIndex={1}
+                  variant="solid"
+                  alignSelf="flex-end"
+                  _text={{
+                    fontSize: 7,
+                  }}>
+                  {NotificationCount}
+                </Badge>
+              ) : null}
+              <IconButton
+                mx={{
+                  base: 'auto',
+                  md: 0,
+                }}
+                style={{marginBottom: NotificationCount !== null && NotificationCount !== 0 ? -5 : 0}}
+                icon={<Icon name={'notifications-outline'} color="#3e5160" size={20} />}
+                onPress={() => navigation.navigate('ProfileNotification')}
+              />
+            </VStack>
             <VStack marginRight={1}>
               {NCount ? (
                 <Badge // bg="red.400"
@@ -122,9 +174,9 @@ const AppBar = ({props}) => {
             </VStack>
             <TouchableOpacity
               onPress={() => navigation.navigate('ProfileDash')}>
-              {ProfileImg === true ? (
+              {ProfileI === true ? (
                 <Image
-                  source={{uri: Img}}
+                  source={{uri: ProfileImg}}
                   rounded={100}
                   width={35}
                   height={35}

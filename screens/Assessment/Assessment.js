@@ -17,6 +17,7 @@ const Assessments = ({navigation}) => {
 
   const AData = useSelector(state => state.Course.AssessmentData);
   const AssessmentData = AData.Data;
+  console.log(AData, 'Adata')
   const [IsCompleted, setIsCompleted] = useState(AssessmentData.isCompleted);
   const [IsAssessmentPass,setIsAssessmentPass] = useState(false);
   const [SResult, setSResult] = useState(false);
@@ -59,11 +60,13 @@ const Assessments = ({navigation}) => {
       try {
         let response = await AttendAssessment(email, CourseData.courseCode, body);
         if (response.status === 200 ){
+          // console.log('Console.log: ', response)
           if (response.message === 'Progress already saved for this details.'){
             alert("Submit error: " + response.message);
             dispatch(setLoading(false));
           } else {
             setResultData(response.data);
+            console.log('Check the res,', response.data)
             let DD = response.data;
             setIsAssessmentPass(DD.isAssessmentPass);
             setAssessmentD(DD.answers);
@@ -98,6 +101,10 @@ const Assessments = ({navigation}) => {
   //     alert(error.message);
   //   }
   // };
+
+  // useEffect(()=>{
+  //   TryAssessmentAgain()
+  // },[])
 
   const TryAssessmentAgain = async() => {
     dispatch(setLoading(true));
@@ -156,9 +163,11 @@ const Assessments = ({navigation}) => {
     return (
       <VStack space={2}>
         <HStack alignItems={'center'} space={3} mt={4}>
-          <Text style={{fontSize: 15,color: '#000000',fontWeight: 'bold',maxWidth:width / 1}}>
-            {props.assessmentOrder}. {' '} {props.assessmentQuestion}
-          </Text>
+          <View style={{maxWidth:width*0.8}}>
+            <Text style={{fontSize: 15, color: '#000000',fontWeight: 'bold',maxWidth:width / 0.7}}>
+              {props.assessmentOrder}. {' '} {props.assessmentQuestion}
+            </Text>
+          </View>
           <View>
 
             { props.isCorrect === false ?
@@ -274,6 +283,7 @@ const Assessments = ({navigation}) => {
           }
 
          <VStack p={4}>
+          {/* {console.log(AssessmentD, 'Assessment D')} */}
           {AssessmentD ?
             <VStack mt={3} style={{marginBottom:150}}>
               <Text style={{fontSize: 17,color: '#000000',fontWeight: 'bold',maxWidth:width / 1}}>

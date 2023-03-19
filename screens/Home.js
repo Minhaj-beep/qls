@@ -1,6 +1,3 @@
-/* eslint-disable no-alert */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-native/no-inline-styles */
 import {
   StyleSheet,
   View,
@@ -8,7 +5,7 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
-  PermissionsAndroid,
+  PermissionsAndroid, Linking
 } from 'react-native';
 import React, {useState, useRef, useEffect} from 'react';
 import {
@@ -45,11 +42,11 @@ import {
   setSearchA,
   setSearchData,
 } from './Redux/Features/CourseSlice';
-
-
 import GetCategories from './Functions/API/GetCategories';
 import RenderCarousel from './components/Home/RenderCarousel';
 import {GetLCourses} from './Functions/API/GetLiveCourses';
+import AppLink from 'react-native-app-link'
+import axios from 'axios';
 // import {phone} from 'phone';
 
 const {width, height} = Dimensions.get('window');
@@ -60,11 +57,26 @@ const Home = ({navigation}) => {
   const [PCourses, setPCourses] = useState();
   const [FCourses, setFCourses] = useState();
   const [catogeries, setcatogeries] = useState();
+  const [loaded, setLoadded] = useState(false);
 
   useEffect(() => {
     CheckLogin();
     // console.log(phone('+916382154544'));
   }, []);
+
+  const becomeAnInstructor = async() => {
+    AppLink.maybeOpenURL('qlearninginstructor://', { 
+      appName: 'QLearning Instructor', 
+      appStoreId: '', 
+      appStoreLocale: '', 
+      playStoreId: 'com.ql.instructor' 
+    }).then(() => {
+      console.log('It can be open')
+    })
+    .catch((err) => {
+      console.log(err)
+    });
+  }
 
   const Permissions = async () => {
     try {
@@ -119,6 +131,8 @@ const Home = ({navigation}) => {
   };
 
   const CheckLogin = async () => {
+    let jwt = await AsyncStorage.getItem('JWT')
+    dispatch(setJWT(jwt.substring(1, jwt.length-1)))
     dispatch(setLoading(true));
     await AsyncStorage.getItem('Email')
       .then(email => {
@@ -175,17 +189,21 @@ const Home = ({navigation}) => {
             Permissions();
           } else if (result.status > 200) {
             dispatch(setLoading(false));
-            alert('GetProfileD error : ' + result.message);
-            console.log('GetProfileD error : ' + result.message);
+            alert('GetProfileD error : 1' + result.message);
+            console.log('GetProfileD error : 1' + result.message);
           }
           // console.log(result);
         })
         .catch(error => {
           dispatch(setLoading(false));
-          console.log('GetProfileD error : ' + error);
-          alert('GetProfileD error : ' + error);
+          console.log('GetProfileD error : 2' + error);
+          // if(error === 'SyntaxError: JSON Parse error: Unexpected token: <'){
+            // GetProfileD(email)
+          // }
+          // alert('GetProfileD error : 2' + error);
         });
     }
+    setLoadded(true)
   };
 
   const AppBarContent = {
@@ -202,11 +220,6 @@ const Home = ({navigation}) => {
     } else {
       const requestOptions = {
         method: 'GET',
-        // headers:{
-        //   'Accept': 'application/json',
-        //   'Content-Type': 'application/json',
-        //   'x-auth-token':UserD.JWT,
-        // },
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -214,6 +227,25 @@ const Home = ({navigation}) => {
           token: EMail,
         },
       };
+      const connfig = {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          gmailUserType: 'STUDENT',
+          token: EMail,
+        },
+
+      };
+
+      axios.get(BaseURL + 'searchCourse?newCourse=true', connfig)
+      .then(response => {
+        console.log('Response:', response.data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      })
+
+
       await fetch(BaseURL + 'searchCourse?newCourse=true', requestOptions)
         .then(response => response.json())
         .then(result => {
@@ -224,16 +256,19 @@ const Home = ({navigation}) => {
             dispatch(setLoading(false));
           } else if (result.status > 200) {
             dispatch(setLoading(false));
-            alert('Error GetFeaturedCourses: ' + result.message);
-            console.log('Error GetFeaturedCourses: ' + result.message);
+            alert('Error GetFeaturedCourses: 1' + result.message);
+            console.log('Error GetFeaturedCourses: 1' + result.message);
           }
           // console.log(result);
           GetPopularCourses(EMail);
         })
         .catch(error => {
           dispatch(setLoading(false));
-          console.log('Error GetFeaturedCourses: ' + error);
-          alert('Error GetFeaturedCourses: ' + error);
+          console.log('Error GetFeaturedCourses: 2' + error);
+          // if(error === 'SyntaxError: JSON Parse error: Unexpected token: <'){
+            // GetFeaturedCourses(EMail)
+          // }
+          // alert('Error GetFeaturedCourses: 2' + error);
         });
     }
   };
@@ -261,6 +296,11 @@ const Home = ({navigation}) => {
         .then(result => {
           if (result.status === 200) {
             // console.log(result.data);
+            result.data.map((i)=> {
+              if (i.courseCode === '5e1a6a36-f940-4dc6-af6f-74d90973a628') {
+                console.log('Dataa: is this =========> ', i)
+              }
+            })
             dispatch(setPopularCourses(result.data));
             setPCourses(result.data);
             dispatch(setLoading(false));
@@ -309,7 +349,7 @@ const Home = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Navbar props={AppBarContent} />
+      {loaded ? <Navbar props={AppBarContent} /> : <></>}
       <ScrollView
         contentContainerStyle={styles.TopContainer}
         nestedScrollEnabled={true}>
@@ -377,13 +417,23 @@ const Home = ({navigation}) => {
               “Lorem Ipsum has been the industry's standard dummy text ever
               since the 1500s, when an unknown printer took a galley.
             </Text>
+            <HStack mt={4}>
             <Button
               colorScheme={'primary'}
               borderRadius={8}
-              mt={4}
+              onPress={()=>navigation.navigate('IndependentAssessment')}
               _text={{fontSize: 9, paddingLeft: 10, paddingRight: 10}}>
               Explore All
             </Button>
+            <Button
+              colorScheme={'primary'}
+              borderRadius={8}
+              ml={3}
+              onPress={()=>navigation.navigate('MyAssessments')}
+              _text={{fontSize: 9, paddingLeft: 10, paddingRight: 10}}>
+              My Assessments
+            </Button>
+            </HStack>
           </VStack>
         </VStack>
 
@@ -402,10 +452,10 @@ const Home = ({navigation}) => {
             <Heading color={'primary.100'} style={{fontSize: 18}}>
               Become A Teacher Today
             </Heading>
-            <Button color={'primary'} _text={{fontSize: 14}} pl={4} pr={4}>
+            <Button color={'primary'} onPress={()=>becomeAnInstructor()} _text={{fontSize: 14}} pl={4} pr={4}>
               Become an Instructor
             </Button>
-            <Text onPress={()=>navigation.navigate("LiveClass")}>Live class</Text>
+            {/* <Text onPress={()=>navigation.navigate("LiveClass")}>Live class</Text> */}
             
           </VStack>
         </VStack>

@@ -8,21 +8,21 @@ const RcCard = ({props}) => {
   const [currencyType, setCurrencyType] = useState();
   //   const navigation = props.navigation;
   var cName = props.courseName;
-  const courseT = cName.slice(0, 25);
+  // const courseT = cName.slice(0, 25);
   // console.log(cName)
   const currency = props.currency === 'INR' ? '₹' : '$';
   console.log(props.currency)
   // let RCount = props.rating;
   // console.log(props)
 
-  useEffect(() => {
-    if (cName.length > 25) {
-      setCourseTitle(courseT + '...');
-    } else {
-      setCourseTitle(cName);
-    }
-    // console.log(props.currency);
-  }, [cName,courseT]);
+  // useEffect(() => {
+  //   if (cName.length > 25) {
+  //     setCourseTitle(courseT + '...');
+  //   } else {
+  //     setCourseTitle(cName);
+  //   }
+  //   // console.log(props.currency);
+  // }, [cName,courseT]);
 
   // console.log(props);
   return (
@@ -39,17 +39,18 @@ const RcCard = ({props}) => {
       <VStack style={styles.CardContent} space={1}>
         <HStack justifyContent="space-between" alignItems="center" space={2}>
           <Text
+          numberOfLines={2}
             style={{
               fontSize: 14,
               fontWeight: 'bold',
               color: '#000000',
-              maxWidth: width / 1.5,
+              maxWidth: width *0.5,
             }}>
-            {courseTitle}
+            {cName}
           </Text>
         </HStack>
 
-        <HStack space={2} alignItems={'center'}>
+        <HStack space={2} width={width *0.5} alignItems={'center'}>
           <HStack space={1}>
             {/* {
                     [...Array(RCount)].map((e, i) =>{
@@ -86,7 +87,7 @@ const RcCard = ({props}) => {
             <Text
               style={{fontSize: 10, fontWeight: '600'}}
               color={'greyScale.800'}>
-              {props.learners.length} Learners
+              {props.learnersCount ? props.learnersCount : '0'} Learners
             </Text>
           </HStack>
         </HStack>
@@ -111,7 +112,7 @@ export default RcCard;
 
 const styles = StyleSheet.create({
   CourseCard: {
-    maxHeight: height / 8.5,
+    // maxHeight: height / 8.5,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
     shadowColor: 'rgba(0, 0, 0, 0.03)',
@@ -124,11 +125,11 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   cardImg: {
-    height: height / 11,
+    height: width*0.2,
     width: width / 3.2,
     borderRadius: 5,
   },
   CardContent: {
-    minWidth: width / 1.7,
+    // minWidth: width / 1.7,
   },
 });

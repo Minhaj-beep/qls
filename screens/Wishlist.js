@@ -90,6 +90,7 @@ const Wishlist = ({navigation}) => {
   };
 
   const WishCard = ({props}) => {
+    console.log('Whishlist props : ', props)
     const currency = props.currency === 'INR' ? '₹' : '$';
     return (
       <View>
@@ -121,32 +122,35 @@ const Wishlist = ({navigation}) => {
                         {props.instructorName}
                       </Text>
                     </View>
-                    <View style={{flexDirection:"row", marginTop:3}}>
+                    <View style={{flexDirection:"row", marginTop:5}}>
                       <Image
-                        source={require('../assets/Home/star.png')}
+                        source={require('../assets/Home/unstar.png')}
                         alt="rating"
                         size="3"
                       />
                       <Image
-                        source={require('../assets/Home/star.png')}
+                        source={require('../assets/Home/unstar.png')}
                         alt="rating"
                         size="3"
                       />
                       <Image
-                        source={require('../assets/Home/star.png')}
+                        source={require('../assets/Home/unstar.png')}
                         alt="rating"
                         size="3"
                       />
                       <Image
-                        source={require('../assets/Home/star.png')}
+                        source={require('../assets/Home/unstar.png')}
                         alt="rating"
                         size="3"
                       />
                       <Image
-                        source={require('../assets/Home/star.png')}
+                        source={require('../assets/Home/unstar.png')}
                         alt="rating"
                         size="3"
                       />
+                      <Text style={{fontSize: 11, color:"#8C8C8C"}}>
+                        {props.rating}({props.ratingCount})
+                      </Text>
                     </View>
                   </View>
                   <View>
@@ -155,9 +159,7 @@ const Wishlist = ({navigation}) => {
                     </Text> */}
                     {props.isLive
                       ?
-                      <Text numberOfLines={2} style={{fontSize: 13, backgroundColor:"#EDAEC0", paddingHorizontal:5, paddingVertical:1, borderRadius:5, bottom:5, color: '#FFF',}} >
-                        Live
-                      </Text>
+                      <Text pr={2} pl={2} borderRadius={20} style={{fontSize:10, paddingHorizontal:5, paddingVertical:1, borderRadius:10, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text>
                       :
                       <></>
                     }

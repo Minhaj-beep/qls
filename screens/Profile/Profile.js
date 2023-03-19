@@ -71,7 +71,14 @@ const Profile = ({navigation}) => {
   const [ErrAbout, setErrAbout] = useState(false);
   const [ErrMobileNo, setErrMobileNo] = useState(false);
   const [showSaved, setSaved] = useState(false);
-  const [PhoneCountrycode, setPhoneCountrycode] = useState('IN');
+  const [load, setLoad] = useState(true)
+  // const [PhoneCountrycode, setPhoneCountrycode] = useState('IN');
+  const [countryCode, setCountryCode] = useState('')
+  const firstNameRef = useRef()
+  const lastNameRef = useRef()
+  const mobileNumberRef = useRef()
+  const aboutStudentRef = useRef()
+  const languageRef = useRef()
 
   useEffect(()=>{console.log(About)},[])
 
@@ -134,7 +141,15 @@ const Profile = ({navigation}) => {
     setlinkedin(PData.linkedin);
     settwitter(PData.twitter);
     setMobileNo(PData.mobileNumber);
+    if(PData.mobileNumber.match(/\W/)){
+      const splitted = PData.mobileNumber.split("+")
+      setMobileNo(splitted[1])
+      setCountryCode(splitted[0])
+    } else {
+      setMobileNo(PData.mobileNumber) 
+    }
     // setLanguage()
+    setLoad(false)
   };
 
   const updateProfile = async () => {
@@ -149,7 +164,19 @@ const Profile = ({navigation}) => {
       LastName === '' ||
       ErrMobileNo === true
     ) {
-      alert('Please fill the details properly!');
+      console.log(MobileNo)
+      // alert('Please fill the details properly!');
+      if(ErrFirstName || FirstName ===''){
+        firstNameRef.current.focus()
+      } else if (ErrLastName || LastName === ''){
+        lastNameRef.current.focus()
+      } else if (MobileNo === ''){
+        mobileNumberRef.current.focus()
+      } else if (ErrAbout || About === '') {
+        aboutStudentRef.current.focus()
+      } else if (Language === ''){
+        languageRef.current.focus()
+      }
     } else {
       console.log(About)
       const requestOptions = {
@@ -174,7 +201,7 @@ const Profile = ({navigation}) => {
           instagram: instagram,
           linkedin: linkedin,
           twitter: twitter,
-          mobileNumber: FormattedPhone,
+          mobileNumber: countryCode + '+' + MobileNo,
           language: Language,
         }),
       };
@@ -208,6 +235,10 @@ const Profile = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <Navbar props={AppBarContent} />
+      {load ? 
+        <></>
+        :
+      <>
       <Modal isOpen={showSaved} onClose={() =>{
         GetProfileD();
         setSaved(false);
@@ -263,6 +294,7 @@ const Profile = ({navigation}) => {
             <Input
               variant="filled"
               bg="#f3f3f3"
+              ref={firstNameRef}
               placeholder="Enter First Name"
               borderRadius={7}
               onChangeText={text => {
@@ -323,6 +355,7 @@ const Profile = ({navigation}) => {
             <Input
               variant="filled"
               bg="#f3f3f3"
+              ref={lastNameRef}
               placeholder="Enter Last Name"
               borderRadius={7}
               onChangeText={text => {
@@ -358,35 +391,44 @@ const Profile = ({navigation}) => {
               Mobile no.
             </Text> */}
             <View>
+              {console.log('country code : ', countryCode)}
             <PhoneInput
-              ref={phoneInput}
-              defaultValue={MobileNo}
-              defaultCode={PhoneCountrycode}
-              value={MobileNo}
+              defaultCode={`${countryCode}`}
               layout="first"
-              containerStyle={styles.PhoneInput}
-              textInputStyle={{height: 70, alignSelf: 'center', paddingBottom:9}}
-              onChangeText={text => {
-                let ValT = MobileVal(text);
-                if (ValT === true) {
-                  setErrMobileNo(false);
-                  setMobileNo(text);
-                } else if (ValT !== true) {
-                  setErrMobileNo(true);
-                  setMobileNo(text);
-                }
-              }}
-              onChangeFormattedText={(num)=> {
-                setFormattedPhone(num.slice(1));
-                let Rnum = num.slice(3);
-                let ValT = MobileVal(Rnum);
-                // console.log(ValT);
-                if (ValT){
-                   let code = phone(num).countryIso2;
-                   setPhoneCountrycode(code);
-                }
-              }}
+              textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
+              codeTextStyle={{height:"150%",}}
+              containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
+              onChangeCountry={(country)=>setCountryCode(country.cca2)}
             />
+            <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
+                <View style={{width:"60%",  marginLeft:'40%'}}>
+
+                <Input 
+                variant="filled" 
+                width={"100%"}
+                justifyContent={"flex-end"}
+                bg="#f3f3f3"
+                mt={0.5}
+                value={MobileNo} 
+                ref={mobileNumberRef}
+                placeholder="Enter Mobile No."
+                onChangeText={text => {
+                  let ValT = MobileVal(text);
+                  if (ValT === true) {
+                    setErrMobileNo(false);
+                    setMobileNo(text);
+                  } else if (ValT !== true) {
+                    setErrMobileNo(true);
+                    setMobileNo(text);
+                  }
+                }}
+                borderRadius={5}
+                keyboardType="numeric" 
+                p={2}
+                style={{justifyContent:"flex-end"}}
+                />
+                </View>
+                </View>
 
             {ErrMobileNo === true ? (
               <Text style={{color: '#FF0000', fontSize: 9}}>
@@ -408,9 +450,10 @@ const Profile = ({navigation}) => {
             </FormControl.Label>
             <TextArea
               variant={'filled'}
+              ref={aboutStudentRef}
               bg="#f3f3f3"
               value={About}
-              placeholder={`${About}""`}
+              placeholder={`${About}`}
               borderRadius={7}
               onChangeText={text => {
                 let ValT = TextVal(text);
@@ -432,7 +475,7 @@ const Profile = ({navigation}) => {
             </Text>
           ) : null}
 
-          <FormControl mt={4} isRequired>
+          {/* <FormControl mt={4} isRequired>
             <FormControl.Label
               _text={{
                 color: '#000',
@@ -444,6 +487,7 @@ const Profile = ({navigation}) => {
             </FormControl.Label>
             <Select
               variant="filled"
+              ref={languageRef}
               bg="#f3f3f3"
               borderColor="#f3f3f3"
               accessibilityLabel="Language"
@@ -457,9 +501,9 @@ const Profile = ({navigation}) => {
               <Select.Item label="Tamil" value="Tamil" />
               <Select.Item label="English" value="English" />
             </Select>
-          </FormControl>
+          </FormControl> */}
 
-          <View style={styles.social}>
+          <View style={{marginTop:15}}>
             <Text
               style={{
                 color: '#000000',
@@ -556,6 +600,8 @@ const Profile = ({navigation}) => {
           </TouchableOpacity>
         </VStack>
       </ScrollView>
+      </>
+    }
     </SafeAreaView>
   );
 };

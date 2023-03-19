@@ -61,7 +61,7 @@ const CartCard = ({props}) => {
             dispatch(setLoading(false));
           } else if (result.status > 200) {
             dispatch(setLoading(false));
-            alert('Error: ' + result.message);
+            // alert('Error: ' + result.message);
             console.log(result.message);
           }
           // console.log(result);

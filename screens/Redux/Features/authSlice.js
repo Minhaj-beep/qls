@@ -8,6 +8,7 @@ const initialState = {
   JWT: '',
   ProfileData: '',
   ProfileImg: false,
+  NotificationCount: null,
 };
 
 export const authSlice = createSlice({
@@ -35,6 +36,9 @@ export const authSlice = createSlice({
     setProfileImg: (state, action) => {
       state.ProfileImg = action.payload;
     },
+    setNotificationCount: (state, action) => {
+      state.NotificationCount = action.payload;
+    },
   },
 });
 
@@ -49,5 +53,6 @@ export const {
   setLoggedIn,
   setGUser,
   setLoading,
+  setNotificationCount,
 } = authSlice.actions;
 export default authSlice.reducer;

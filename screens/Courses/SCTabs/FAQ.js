@@ -45,11 +45,11 @@ const FAQ = () => {
         }
       } else {
         console.log("GetFAQData error: " + response.message);
-        alert("GetFAQData error: " + response.message);
+        // alert("GetFAQData error: " + response.message);
       }
     } catch (err) {
       console.log("GetFAQData error: " + err.message);
-      alert("GetFAQData error: " + err.message);
+      // alert("GetFAQData error: " + err.message);
     } finally {
       dispatch(setLoading(false));
     }

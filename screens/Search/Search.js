@@ -75,6 +75,7 @@ const Search = ({navigation}) => {
 
 
   const SearchURL = new Map();
+  console.log(SearchURL, 'SearchURL')
 
   useEffect(() => {
     GetCategories();
@@ -87,6 +88,13 @@ const Search = ({navigation}) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+
+  useEffect(()=>{
+    if(CAT !== 'NIL'){
+      GetSubCategories()
+    }
+  },[CAT])
 
   const AppBarContent = {
     title: '',
@@ -186,25 +194,23 @@ const Search = ({navigation}) => {
       dispatch(setLoading(false));
     } else {
       let SVal = [...SearchURL.entries()];
+      // console.log(FeeStart, 'FeeStart and ', FeeEnd, 'FeeEnd')
       let MSize = SearchURL.size;
       SearchURL.clear();
       SVal.forEach((data, index)=>{
-      if ( MSize === 1 || index === parseInt(MSize) - 1) {
-        let SD = URLString + '&' + data[0] + data[1];
-        setURLString(SD);
-      } else {
-        let SD = URLString + '&' + data[0] + data[1] + '&';
-        setURLString(SD);
-      }
+        if ( MSize === 1 || index === parseInt(MSize) - 1) {
+          let SD = URLString + '&' + data[0] + data[1];
+          setURLString(SD);
+        } else {
+          let SD = URLString + '&' + data[0] + data[1] + '&';
+          setURLString(SD);
+        }
       });
-      // console.log(API + URLString);
+
+      console.log(URLString, 'URLString -----------------------')
+      
       const requestOptions = {
         method: 'GET',
-        // headers:{
-        //   'Accept': 'application/json',
-        //   'Content-Type': 'application/json',
-        //   'x-auth-token':UserD.JWT,
-        // },
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -213,12 +219,13 @@ const Search = ({navigation}) => {
         },
       };
       console.log(API + URLString);
-      fetch(API + URLString, requestOptions)
+      fetch(BaseURL + 'searchCourse?courseFeeStart=' + FeeStart + '&courseFeeEnd=' + FeeEnd + URLString, requestOptions)
         .then(response => response.json())
         .then(result => {
           if (result.status === 200) {
             dispatch(setLoading(false));
             setResult(result.data);
+            console.log('Get Filterd data : ', result.data)
             onClose();
             setURLString('');
             dispatch(setSearchData(result.data));
@@ -358,6 +365,7 @@ const Search = ({navigation}) => {
         .then(result => {
           if (result.status === 200) {
             dispatch(setLoading(false));
+            console.log('Get the categories :', result.data)
             setSubCData(result.data);
             dispatch(setSearchData(result.data));
           } else if (result.status > 200) {
@@ -419,6 +427,7 @@ const Search = ({navigation}) => {
           }
         }}
         >
+          {/* {console.log(data, "Single data from result")} */}
           <RCCard props={data} />
         </TouchableOpacity>
       );
@@ -474,7 +483,6 @@ const Search = ({navigation}) => {
                 <Select
                   onValueChange={Value => {
                     setCAT(Value);
-                    GetSubCategories();
                   }}
                   defaultValue={CAT}
                   placeholder="Category"

@@ -72,7 +72,7 @@ const AccountActivity = ({navigation}) => {
     return activity.map(act => {
       return (
         <View key={act.data}>
-          <HStack space={3} maxWidth={width / 0.5} mt={3}>
+          <HStack space={3} alignItems="center" maxWidth={width / 0.5} mt={3}>
             <View>
               <View
                 style={{
@@ -83,12 +83,11 @@ const AccountActivity = ({navigation}) => {
                 <IconButton icon={<Icon name={'time-outline'} size={20} />} />
               </View>
             </View>
-            <VStack style={{maxWidth: width / 1.2}}>
-              <Text
-                style={{color: '#000000', fontWeight: 'bold', fontSize: 16}}>
+            <VStack maxWidth={width*0.75}>
+              <Text style={{color: '#000000', fontWeight: 'bold', fontSize: 16}}>
                 {act.header}
               </Text>
-              <Text style={{color: '#395061', fontSize: 13}}>{act.data}</Text>
+              <Text noOfLines={2} style={{color: '#395061', fontSize: 13}}>{act.data}</Text>
               {/* <Text style={{color:"#8C8C8C", fontSize:10}}>04 Oct 2021 at 5:01 PM</Text> */}
             </VStack>
           </HStack>

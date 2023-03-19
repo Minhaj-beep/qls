@@ -47,6 +47,8 @@ import {
     const toast = useToast();
     const [ActiveSessions, setActiveSessions] = useState([]);
     const CData = useSelector(state => state.Course.SCData);
+    const FullCourseData = useSelector(state => state.Course.FullCourseData);
+    console.log('Single course data: ', FullCourseData, '========================Find it===============')
     const type = CData.type;
     const CourseData = CData.CDD;
     // const CourseData = DemoData[0];
@@ -118,7 +120,7 @@ import {
         if (data.length !== 0){
           let LData = data[0].liveClassList;
           setLiveClass(LData);
-          // console.log(LData);
+          // console.log('helo: ===================> ', LData);
           // setLiveClass(LiveClassD);
         }
       } else {
@@ -459,6 +461,7 @@ import {
                 <Button
                   colorScheme={'primary'}
                   _text={{fontSize: 12}}
+                  onPress={()=>alert('Call the request demo API')}
                   pl={4}
                   pr={4}>
                   Request For Demo class
@@ -622,7 +625,7 @@ import {
                             return (
                               <Image
                                 key={i}
-                                source={require('../../assets/Home/star.png')}
+                                source={require('../../assets/Home/unstar.png')}
                                 alt="rating"
                                 size="3"
                               />
@@ -630,6 +633,7 @@ import {
                           }
                         )
                       }
+                      <Text  style={{fontSize: 11, color:"#8C8C8C"}}>0(0)</Text>
                     </HStack>
                   </VStack>
                 </HStack>
@@ -645,7 +649,7 @@ import {
                     <Image source={require('../../assets/graduate.png')} alt="courses" size={7}/>
                     <Text color={'#000'} fontSize={14}>Total Learners</Text>
                   </HStack>
-                  {courses ? <Text color={'#000'} fontSize={14}>{courses[0].learners.length}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
+                  {courses ? <Text color={'#000'} fontSize={14}>{courses[0].learnersCount > 0 ? courses[0].learnersCount : 0}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
                 </HStack>
                 <Button mt={2} bg={'secondary.50'} _text={{ color:'#364b5b', fontSize:14, fontWeight:'bold' }} _pressed={{backgroundColor:'#F0E1EB', opacity:'0.5' }} onPress={()=> navigation.navigate('InstructorProfile')}>
                     View Profile

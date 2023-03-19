@@ -27,9 +27,14 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setLoading} from '../../Redux/Features/authSlice';
 import { Checkout } from '../../Functions/API/Checkout';
 import { GetCart } from '../../Functions/API/GetCart';
+import { CountryRegionData } from '../../BuyNow/Countries';
+import { Dropdown } from 'react-native-element-dropdown'
 import {RAZORPAY_API_KEY, RAZORPAY_API_KEY_2} from '../../StaticData/Variables';
 import RazorpayCheckout from 'react-native-razorpay';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {PaymentVerification} from '../../Functions/API/PaymentVerification';
+import { GetDiscountCodesForCartItems } from '../../Functions/API/GetDiscountCodesForCartItems';
+import { ApplyPromoCode } from '../../Functions/API/ApplyPromoCode';
 
 const {width, height} = Dimensions.get('window');
 
@@ -38,10 +43,25 @@ const Cart = ({navigation}) => {
   const [CartData, setCartData] = useState(null);
   const [cartA, setCartA] = useState();
   const [CartLen, setCartLen] = useState(0);
+  const [isFocus, setIsFocus] = useState(false);
+  const [country, setCountry] = useState(null)
+  const [countries, setCountries] = useState(null)
+  const [address1, setAddress1] = useState(null)
+  const [address2, setAddress2] = useState(null)
+  const [region, setRegion] = useState(null)
+  const [regions, setRegions] = useState(null)
+  const [countryError, setCountryError] = useState(null)
+  const [regionError, setRegionError] = useState(null)
+  const [coupon, setCoupon] = useState(null)
+  const [couponList, setCouponList] = useState([])
+  const countryRef = useRef()
+  const address2Ref = useRef()
+  const address1Ref = useRef()
+  const regionRef = useRef()
   const email = useSelector(state => state.Auth.Mail);
   const ProfileData = useSelector(state => state.Auth.ProfileData);
   const [profile, setProfile] = useState();
-  const [CheckOutD, setCheckOutD] = useState();
+  const [CheckOutD, setCheckOutD] = useState(null);
   const [ShowSuccess, setShowSuccess] = useState(false);
 
   const AppBarContent = {
@@ -52,12 +72,94 @@ const Cart = ({navigation}) => {
     RightIcon2: 'person',
   };
 
+  useEffect(()=>{
+    if(coupon !== null){
+      applyPromoCode()
+    }
+  },[coupon])
+
+  const applyPromoCode = async () => {
+    try {
+      const result = await ApplyPromoCode(email, coupon)
+      if(result.status === 200) {
+        console.log(result)
+        GetPCart()
+      } else {
+        console.log('applyPromoCode error 1 :', result)
+      }
+    } catch (e) {
+      console.log('applyPromoCode error 2 :', e)
+    }
+  }
+
+  useEffect(()=>{
+    getDiscountCodesForCartItems()
+  },[])
+
+  const getDiscountCodesForCartItems = async() => {
+    try {
+      const result = await GetDiscountCodesForCartItems(email)
+      if(result.status === 200) {
+        console.log(result.data)
+        let coupons = []
+        result.data.map((i)=> {
+          let obj = {
+              label: i.couponName,
+              value: i.couponName
+          }
+          coupons = [ ...coupons, obj]
+          setCouponList(coupons)
+        })
+      } else {
+        console.log('==GetDiscountCodesForCartItems==1 ', result)
+      }
+    } catch (e) {
+      console.log('==GetDiscountCodesForCartItems==2 ', e)
+    }
+  }
+
   useEffect(() => {
     GetPCart();
     if (ProfileData){
       setProfile(ProfileData);
     }
   }, [ProfileData]);
+  useEffect(()=>{
+    getCountries()
+  },[])
+
+  const getCountries = () => {
+    let countries = []
+    CountryRegionData.map((i)=>{
+        let obj = {
+            label: i[0],
+            value: i[0]
+        }
+        // console.log(i[0])
+        countries = [ ...countries, obj]
+    })
+    setCountries(countries)
+}
+
+const getRegions = (c) => {
+    let regions = []
+    CountryRegionData.map((i)=>{
+        if(i[0] === c){
+            let arr = i[2].split('|')
+            arr.map((r)=>{
+                let reg = r.split('~')
+                console.log(reg[0])
+                let obj = {
+                    label: reg[0],
+                    value: reg[0]
+                }
+                regions = [ ...regions, obj]
+            })
+            // console.log(arr[0])
+        }
+    })
+    setRegions(regions)
+}
 
 
   const CheckoutRazorpay = (data) => {
@@ -77,24 +179,38 @@ const Cart = ({navigation}) => {
       theme: {color: '#364b5b'},
     };
     RazorpayCheckout.open(options).then((dd) => {
+      console.log('Razor pay payment data: ', dd)
       VerifyPayment(dd.razorpay_order_id, dd.razorpay_payment_id, dd.razorpay_signature);
     }).catch((error) => {
+      // GetPCart()
       let des = error.error.description;
-      alert(`Error: ${error.code} | ${des}`);
+      console.log(`Error CheckoutRazorpay : ${error.code} | ${des}`);
     });
   };
 
   const CheckoutServer = async() => {
-    try {
-      let CheckO = await Checkout(email);
-    if ( CheckO.status === 200){
-      setCheckOutD(CheckO.data);
-      CheckoutRazorpay(CheckO.data);
+    if(country === null || country === ''){
+      setCountryError('Please select a country!')
+    } else if (region === null || region === '') {
+      setRegionError('Please select a region!')
+    } else if (address1 === null || address1 === ''){
+      console.log(address1)
+      address1Ref.current.focus()
+    } else if (address2 === null || address2 === '') {
+      console.log(address2)
+      address2Ref.current.focus()
     } else {
-      alert("CheckoutServer error: " + CheckO.message);
-    }
-    } catch (error) {
-      alert("CheckoutServer error: " + error.message);
+      try {
+        let CheckO = await Checkout(email);
+        if ( CheckO.status === 200){
+          CheckoutRazorpay(CheckO.data);
+        } else {
+          console.log("CheckoutServer error 1: " + CheckO.message);
+          console.log('Cart data : ', CartData)
+        }
+      } catch (error) {
+        console.log("CheckoutServer error 2: " + error.message);
+      }
     }
   };
 
@@ -102,23 +218,27 @@ const Cart = ({navigation}) => {
     dispatch(setLoading(true));
     try {
       let CheckO = await PaymentVerification(email, oi, pi,sign);
-    if ( CheckO.status === 200){
-      setShowSuccess(true);
-      setCartData(null);
-      setCartLen(0);
-      setCartA(null);
-      dispatch(setLoading(false));
-    } else {
-      setShowSuccess(false);
-      dispatch(setLoading(false));
-    }
+        if ( CheckO.status === 200){
+          setShowSuccess(true);
+          setCartData(null);
+          setCartLen(0);
+          setCartA(null);
+          dispatch(setLoading(false));
+          navigation.navigate('Courses')
+          ////////////////////////////////////////////////////////////////////////////////////////////////
+        } else {
+          console.log('VerifyPayment error')
+          setShowSuccess(false);
+          dispatch(setLoading(false));
+        }
     } catch (error) {
       alert("VerifyPayment error: " + error.message);
       dispatch(setLoading(false));
     }
   };
 
-  const RemoveFromCart = async (code, name) => {
+  const RemoveFromCart = async (code, name, type) => {
+    // console.log(code , 'and ', name)
     dispatch(setLoading(true));
     if (email === '') {
       alert('Something is wrong, please login again');
@@ -138,59 +258,86 @@ const Cart = ({navigation}) => {
         },
       };
 
-      await fetch(BaseURL + 'api/v1/cart/' + code, requestOptions)
+      if(type === 'course') {
+        await fetch(BaseURL + 'api/v1/cart/clearCartByCoursecode?courseCode=' + code, requestOptions)
         .then(response => response.json())
         .then(result => {
-          if (result.status === 200) {
-            GetPCart();
+            console.log('Helooooooooooooooooooooooooooooooooooooooooooooooooo')
+            if (result.status === 200) {
+              getDiscountCodesForCartItems()
+              GetPCart();
+              dispatch(setLoading(false));
+              alert(name + ' has been removed from cart!')
+            } else if (result.status > 200) {
+              dispatch(setLoading(false));
+              console.log(result.message);
+            }
+          })
+          .catch(error => {
             dispatch(setLoading(false));
-            alert(name + ' has been removed from cart!')
-          } else if (result.status > 200) {
+            console.log('CError: ' + error);  // From here SyntaxError: JSON Parse error: Unexpected token: < occuring
+          });
+      } else {
+        await fetch(BaseURL + 'api/v1/cart/clearCartByCoursecode?assessmentCode=' + code, requestOptions)
+        .then(response => response.json())
+        .then(result => {
+            console.log('Helooooooooooooooooooooooooooooooooooooooooooooooooo')
+            if (result.status === 200) {
+              GetPCart();
+              dispatch(setLoading(false));
+              alert(name + ' has been removed from cart!')
+            } else if (result.status > 200) {
+              dispatch(setLoading(false));
+              console.log(result.message);
+            }
+          })
+          .catch(error => {
             dispatch(setLoading(false));
-            alert('Error: ' + result.message);
-          }
-        })
-        .catch(error => {
-          dispatch(setLoading(false));
-          alert('CError: ' + error);
-        });
+            console.log('CError: ' + error);  // From here SyntaxError: JSON Parse error: Unexpected token: < occuring
+          });
+      }
     }
   };
 
   const CartCard = ({props}) => {
-    console.log(props)
-    const cName = props.courseName;
+    console.log('props: ', props)
+    const cName = props.courseName ? props.courseName : props.assessmentTitle
     const courseT = cName.length > 25 ? cName.slice(0,25) + '...' : cName;
     const currency = props.currency === 'INR' ? '₹' : '$';
     return (
-      <View>
+      <View style={{width:width*0.95}}>
         <VStack style={styles.CourseCard} mt={3}>
           <HStack space={3}>
             <Center>
-              <Image
-                style={styles.cardImg}
-                source={{uri: props.thumbNailImagePath}}
-                alt="courseimg"
-                resizeMode="cover"
-              />
+              {
+                props.thumbNailImagePath ?
+                <Image
+                  style={styles.cardImg}
+                  source={{uri: props.thumbNailImagePath}}
+                  alt="courseimg"
+                  resizeMode="cover"
+                />
+                : 
+                <View style={{width:width / 3.5, alignItems:"center"}}>
+                  <Ionicons name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 40,}} size={40} />
+                </View>
+              }
             </Center>
             <VStack style={styles.CardContent}>
-              <View style={{flexDirection:"row", justifyContent:"space-between"}}>
+              <View style={{flexDirection:"row", justifyContent:"space-between", alignItems:"center"}}>
               <Text
                 noOfLines={2}
                 style={{
                   fontSize: 12,
                   fontWeight: 'bold',
                   color: '#000000',
-                  maxWidth: width / 2,
+                  maxWidth: width*0.44,
                 }}>
                 {courseT}
               </Text>
               {props.isLive
                 ?
-                <Text numberOfLines={2} style={{fontSize: 13, backgroundColor:"#EDAEC0", paddingHorizontal:5, paddingVertical:0, borderRadius:5, bottom:5, color: '#FFF',}} >
-                  Live
-                </Text>
+                  <Text pr={2} pl={2} borderRadius={20} style={{fontSize:10, paddingHorizontal:5, paddingVertical:1, borderRadius:10, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text>
                 :
                 <></>
               }
@@ -292,6 +439,8 @@ const Cart = ({navigation}) => {
           <Text style={{fontSize: 11}}>
             {props.rating} ({props.ratingCount ? props.ratingCount : 0})
           </Text>
+          <Image alt="graduate icon" source={require('../../../assets/Home/graduate_student.png')} size="3"/>
+          <Text style={{fontSize: 11}}>{props.learnersCount} Learners</Text>
         </HStack>
                 <View>
                   <Text
@@ -311,7 +460,7 @@ const Cart = ({navigation}) => {
             bg={'white'}
             _pressed={{backgroundColor: '#FFFFFF', opacity: 0.5}}
             onPress={() => {
-              RemoveFromCart(props.courseCode, props.courseName);
+              props.courseCode ? RemoveFromCart(props.courseCode, props.courseName, 'course') : RemoveFromCart(props.assessmentCode, props.assessmentTitle, 'assessment')
             }}>
             Remove from Cart
           </Button>
@@ -329,6 +478,8 @@ const Cart = ({navigation}) => {
       let result = await GetCart(email);
         if (result.status === 200) {
           let cartD = result.data;
+          console.log('Get vat and all => ', cartD)
+          setCoupon(cartD.couponName)
           let ObjData = Object.keys(cartD).length === 0;
           if (ObjData !== true) {
             if (cartD.items !== undefined) {
@@ -343,12 +494,12 @@ const Cart = ({navigation}) => {
           dispatch(setLoading(false));
         } else if (result.status > 200) {
           dispatch(setLoading(false));
-          alert('Error: ' + result.message);
+          console.log('Error: GetPCart 1' + result.message);
         }
       }
     } catch (e) {
       dispatch(setLoading(false));
-      alert('Error: ' + e.message);
+      console.log('Error: GetPCart 2 ' + e.message);
     }
   };
 
@@ -420,36 +571,135 @@ const Cart = ({navigation}) => {
         {cartA ? (
           <VStack m={5} space={2}>
             
+            {
+              Object.keys(couponList).length > 0 ?
+              <FormControl mb={5}>
+                <FormControl.Label
+                  _text={{
+                    fontSize: 13,
+                    color: 'greyScale.800',
+                    fontWeight: 'bold',
+                  }}
+                  mb={1}>
+                  Have Promo Code ?
+                </FormControl.Label>
+                <Dropdown
+                    style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    itemTextStyle={{color:"#364b5b"}}
+                    data={couponList}
+                    // ref={countryRef}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={'Select coupon'}
+                    searchPlaceholder="Search..."
+                    value={coupon}
+                    onFocus={() => setIsFocus(true)}
+                    onBlur={() => setIsFocus(false)}
+                    onChange={item => {
+                        setCoupon(item.value)
+                        // setRegion(null);
+                        // getRegions(item.value)
+                        // setCountryError(null)
+                        setIsFocus(false);
+                    }}
+                />
+              </FormControl>
+              : null
+            }
 
-            <FormControl mb={5}>
-              <FormControl.Label
-                _text={{
-                  fontSize: 13,
-                  color: 'greyScale.800',
-                  fontWeight: 'bold',
-                }}
-                mb={1}>
-                Have Promo Code ?
-              </FormControl.Label>
-              <Input
-                variant="filled"
-                width={'100%'}
-                bg="#f8f8f8"
-                placeholder="Enter your Promo Code"
-                borderRadius={10}
-                InputRightElement={
-                  <Button
-                    colorScheme={'primary'}
-                    _text={{fontSize: 12}}
-                    mr={2}
-                    pl={7}
-                    pr={7}>
-                    Apply
-                  </Button>
-                }
-              />
-            </FormControl>
+            <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Billing Address</Text>
+            <View style={{marginTop:10, marginBottom:0}}>
+             {
+                countries !== null ?
+                <Dropdown
+                    style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    itemTextStyle={{color:"#364b5b"}}
+                    data={countries}
+                    ref={countryRef}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={'Select country'}
+                    searchPlaceholder="Search..."
+                    value={country}
+                    onFocus={() => setIsFocus(true)}
+                    onBlur={() => setIsFocus(false)}
+                    onChange={item => {
+                        setCountry(item.value);
+                        setRegion(null);
+                        getRegions(item.value)
+                        setCountryError(null)
+                        setIsFocus(false);
+                    }}
+                />
+                : <></>
+             }
+             {countryError !== null ? <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold', color:"red"}}>{countryError}</Text> : <></>}
+            </View>
+            <View style={{marginTop:0, marginBottom:2}}>
+            {
+                regions !== null ?
+                <Dropdown
+                    style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    itemTextStyle={{color:"#364b5b"}}
+                    data={regions}
+                    ref={regionRef}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={'Select region'}
+                    searchPlaceholder="Search..."
+                    value={region}
+                    onFocus={() => setIsFocus(true)}
+                    onBlur={() => setIsFocus(false)}
+                    onChange={item => {
+                        setRegion(item.value);
+                        setRegionError(null)
+                        setIsFocus(false);
+                    }}
+                />
+                : <></>
+             }
+             {regionError !== null ? <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold', color:"red"}}>{regionError}</Text> : <></>}
+            </View>
+            <View>
+                <Input 
+                    placeholder="Address line 1"
+                    ref={address1Ref}
+                    onChangeText={(text)=>{
+                      console.log(text.trim())
+                      setAddress1(text.trim())
+                    }}
+                />
+            </View>
+            <View style={{marginVertical:2}}>
+                <Input 
+                    placeholder="Address line 2"
+                    ref={address2Ref}
+                    onChangeText={(text)=>{
+                      console.log(text)
+                      setAddress2(text.trim())
+                    }}
+                />
+            </View>
 
+            <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Order Summary</Text>
             <HStack justifyContent="space-between">
               <Text
                 color={'greyScale.800'}
@@ -471,7 +721,7 @@ const Cart = ({navigation}) => {
               <Text
                 color={'primary.100'}
                 style={{fontSize: 13, fontWeight: 'bold'}}>
-                {cartA.discountValue}
+                {cartA.currencyCode  === 'USD' ? '$' : '₹'} {cartA.discountValue ? cartA.discountValue : 0}
               </Text>
             </HStack>
             <HStack justifyContent="space-between">
@@ -483,7 +733,7 @@ const Cart = ({navigation}) => {
               <Text
                 color={'primary.100'}
                 style={{fontSize: 13, fontWeight: 'bold'}}>
-                {cartA.taxValue}
+                {cartA.currencyCode === 'USD' ? '$' : '₹'} {Number.isInteger(cartA.taxValue) ? cartA.taxValue : cartA.taxValue.toFixed(2)}
               </Text>
             </HStack>
 
@@ -544,6 +794,44 @@ const styles = StyleSheet.create({
   },
   CardContent: {
     minWidth: width / 1.7,
+  },
+  dropdown: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    color:"#364b5b"
+  },
+  icon: {
+    marginRight: 5,
+  },
+  label: {
+    position: 'absolute',
+    color:"#364b5b",
+    backgroundColor: 'black',
+    left: 22,
+    top: 8,
+    zIndex: 999,
+    paddingHorizontal: 8,
+    fontSize: 14,
+  },
+  placeholderStyle: {
+    fontSize: 13, fontWeight: 'bold',
+    color:"#364b5b"
+  },
+  selectedTextStyle: {
+    fontSize: 13, fontWeight: 'bold',
+    color:"#364b5b"
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+    color:"#364b5b"
   },
 });
 

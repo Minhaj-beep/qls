@@ -50,6 +50,7 @@ const Courses = ({navigation}) => {
   const GetPC = async() => {
      try {
       let response = await GetPurchasedCourses(email);
+      console.log(email)
       if (response.status === 200) {
         if (response.data.length !== 0) {
           setPCourses(response.data);
@@ -57,6 +58,7 @@ const Courses = ({navigation}) => {
           console.log('PC courses retrieved successfully');
         }
       } else {
+        console.log(response)
         alert("GetPC error: " + response.message);
         console.log("GetPC error: " + response.message);
       }
@@ -88,7 +90,11 @@ const Courses = ({navigation}) => {
               }}
               key={index}
               >
-                <CourseCard props={data}/>
+                {
+                  data.courseCode ?
+                  <CourseCard props={data}/>
+                  : <></>
+                }
               </TouchableOpacity>
               );
             })

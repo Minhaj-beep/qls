@@ -32,7 +32,7 @@ export default function DashImg() {
   const Email = useSelector(state => state.Auth.Mail);
   const ProfileImg = useSelector(state => state.Auth.ProfileImg);
   const ProfileD = useSelector(state => state.Auth.ProfileData);
-  const [PImage, setPImage] = useState();
+  const [PImage, setPImage] = useState(null);
   const [upImage, setUpImage] = useState(null);
   const [DImage, setDImage] = useState(null);
   const [ShowImgUp, setShowImgUp] = useState(false);
@@ -128,7 +128,7 @@ export default function DashImg() {
           if (result.status === 200) {
             setShowImgUp(false);
             dispatch(setProfileImg(true));
-            // getProfile()
+            getProfile()
             alert('Uploaded Successfully !');
             console.log(result);
           } else if (result.status > 200) {
@@ -141,7 +141,8 @@ export default function DashImg() {
         .catch(error => {
           setShowImgUp(false);
           console.log('Error:' + error);
-          alert('Error: ' + error);
+          // alert('Error: ' + error);
+          uploadImage(image)
         });
     }
   };

@@ -1,54 +1,18 @@
-/* eslint-disable react-native/no-inline-styles */
-import {
-  StyleSheet,
-  View,
-  SafeAreaView,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, View, SafeAreaView, ScrollView, Dimensions, TouchableOpacity,} from 'react-native';
 import React, {useState, useRef} from 'react';
-import {
-  Center,
-  Text,
-  Box,
-  VStack,
-  HStack,
-  Input,
-  FormControl,
-  Button,
-  Link,
-  Heading,
-  Image,
-  Modal,
-  IconButton,
-} from 'native-base';
+import { Center, Text, Box, VStack, HStack, Input, FormControl, Divider, Button, Link, Heading, Image, Modal, IconButton,} from 'native-base';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {
-  PassVal,
-  EmailVal,
-  OtpVal,
-  MobileVal,
-  TextVal,
-} from '../Functions/Validations';
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import { PassVal, EmailVal, OtpVal, MobileVal, TextVal,} from '../Functions/Validations';
 import {BaseURL} from '../StaticData/Variables';
 import {useDispatch, useSelector} from 'react-redux';
-import {
-  setMail,
-  setProfileData,
-  setJWT,
-  setLoggedIn,
-  setGUser,
-  setUserData,
-  setLoading,
-} from '../Redux/Features/authSlice';
+import { setMail, setProfileData, setJWT, setLoggedIn, setGUser, setUserData, setLoading,} from '../Redux/Features/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import { GoogleSignin, GoogleSigninButton, statusCodes,} from '@react-native-google-signin/google-signin'
+import { GetAccountDetailsbyMobileNum } from '../Functions/API/GetAccountDetailsbyMobileNum';
+import PhoneInput from 'react-native-phone-number-input'
+import { LoginWithMobileNum } from '../Functions/API/LoginWithMobileNum';
 
 const {width, height} = Dimensions.get('window');
 
@@ -154,7 +118,7 @@ const Login = ({navigation}) => {
 
   const [NewPassword, setNewPassword] = useState();
   const [CNewPassword, setCNewPassword] = useState();
-  const [ForgotEmail, setForgotEmail] = useState();
+  const [ForgotEmail, setForgotEmail] = useState('');
 
   const [LShow, setLShow] = useState(false);
   const [RPShow, setRPShow] = useState(false);
@@ -173,11 +137,119 @@ const Login = ({navigation}) => {
 
   const [time, setTime] = useState(60);
   const timerRef = useRef(time);
+  const forgotMailRef = useRef();
 
   const [showForgot, setForgot] = useState(false);
+  const [forgetEmailErr, setForgetEmailErr] = useState(false);
   const [showVerifyf, setVerifyf] = useState(false);
   const [showRpass, setRpass] = useState(false);
   const [showRs, setRs] = useState(false);
+
+  const [loginWithNum, setLoginWithNum] = useState(false)
+  const [loginWithNumOtp, setLoginWithNumOtp] = useState(false)
+  const [phNo, setPhNo] = useState('')
+  const [otp, setOtp] = useState('')
+  const [countryCode, setCountryCode] = useState('IN')
+  const [callingCode, setCallingCode] = useState(null)
+  const [verificationId, setVerificationId] = useState('')
+  const [selectMobileAccount, setSelectMobileAccount] = useState(false)
+  // const [mobileAccount, setMobileAccount] = useState({})
+  const [mobileAccounts, setMobileAccounts] = useState([])
+
+  const loginWithMobileNum = async(mobileAccount) => {
+    try {
+      let response = await LoginWithMobileNum(mobileAccount.mobileNumber, mobileAccount.userType, mobileAccount.accountId, mobileAccount.email);
+      if (response.status === 200) {
+        console.log(Object.keys(response.data).length, response, 'responds loginWithMobileNum')
+        dispatch(setGUser(false));
+        dispatch(setJWT(response.data.JWT));
+        dispatch(setMail(response.data.Email));
+        EUSavelocal('Email', JSON.stringify(response.data.Email));
+        EUSavelocal('Name', JSON.stringify(response.data.Name));
+        EUSavelocal('JWT', JSON.stringify(response.data.JWT))
+        dispatch(setLoggedIn(true))
+        setSelectMobileAccount(false)
+      } else {
+        console.log('Error loginWithMobileNum 1:' + response.message);
+      }
+    } catch (error) {
+      console.log('Error loginWithMobileNum 2:' + error.message);
+    }
+  }
+
+  const phoneNoSubmit = () => {
+    // console.log(phNo, countryCode, callingCode)
+    if(countryCode === 'IN'){
+      if (phNo.length === 10) {
+        var v = parseFloat(phNo)
+        if(Number.isInteger(v)){
+          getAccountDetailsbyMobileNum(v)
+        } else {
+          alert('Please insert only numbers.')
+        }
+      } else {
+        alert('Please enter 10 digit mobile no.')
+      }
+    } else {
+      alert('Currently only Indian users are allowed!')
+    }
+  }
+
+  const getAccountDetailsbyMobileNum = async (num) => {
+    num = '+91' + num
+    console.log(num, 'num')
+    try {
+      let response = await GetAccountDetailsbyMobileNum(num);
+      if (response.status === 200) {
+        console.log(Object.keys(response.data).length, response, 'responds getAccountDetailsbyMobileNum')
+        if(Object.keys(response.data).length > 0) {
+          // Account exit, sending OTP to mobile no
+          sendOtp(num)
+          setLoginWithNumOtp(true)
+          setMobileAccounts(response.data)
+        } else {
+          alert("Please register with this number and try re-login")
+        }
+        setLoginWithNum(false)
+      } else {
+        console.log('Error getAccountDetailsbyMobileNum1:' + response.message);
+      }
+    } catch (error) {
+      console.log('Error getAccountDetailsbyMobileNum2:' + error.message);
+    }
+  }
+
+  const sendOtp = async (phoneNumber) => {
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      setVerificationId(confirmation.verificationId);
+    } catch (error) {
+      console.log('Error sending OTP:', error);
+      // Alert.alert('Error', 'Could not send OTP. Please try again later.');
+    }
+  };
+
+  const verifyOtp = async () => {
+    console.log(otp)
+    let result = {}
+    try {
+      const credential = auth.PhoneAuthProvider.credential(
+        verificationId,
+        otp
+      );
+      result = await auth().signInWithCredential(credential);
+      console.log(result)
+    } catch (error) {
+      console.log('Error verifying OTP:', error);
+    }
+    if(Object.keys(result).length > 0){
+      setLoginWithNumOtp(false)
+      setSelectMobileAccount(true)
+    } else {
+      alert('Please insert the OTP correctly and try again!')
+    }
+    // ChangePhoneNumber()
+  };
 
   function isNumeric(val) {
     return /^-?\d+$/.test(val);
@@ -222,43 +294,48 @@ const Login = ({navigation}) => {
   };
 
   const handleForgot = async () => {
-    dispatch(setLoading(true));
-    if (ErrVFMail === true) {
-      dispatch(setLoading(false));
-      alert('Please enter your email properly');
+    if(ForgotEmail === ''){
+      forgotMailRef.current.focus()
+      setForgetEmailErr(true)
     } else {
-      const requestOptions = {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: ForgotEmail,
-          userType: 'STUDENT',
-        }),
-      };
-      await fetch(BaseURL + 'forgotverificationemail', requestOptions)
-        .then(response => response.json())
-        .then(result => {
-          dispatch(setLoading(false));
-          if (result.status === 200) {
-            emailAbstract(ForgotEmail);
-            setForgot(false);
-            setVerifyf(true);
-            setTime(60);
-            timerRef.current = 60;
-            setOTPTimer();
-          } else if (result.status > 200) {
-            alert("handleForgot: " + result.message);
-          }
-          console.log(result);
-        })
-        .catch(error => {
-          console.log('Error handleForgot:', error);
-          dispatch(setLoading(false));
-          alert('Error handleForgot:' + error);
-        });
+      dispatch(setLoading(true));
+      if (ErrVFMail === true) {
+        dispatch(setLoading(false));
+        alert('Please enter your email properly');
+      } else {
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: ForgotEmail,
+            userType: 'STUDENT',
+          }),
+        };
+        await fetch(BaseURL + 'forgotverificationemail', requestOptions)
+          .then(response => response.json())
+          .then(result => {
+            dispatch(setLoading(false));
+            if (result.status === 200) {
+              emailAbstract(ForgotEmail);
+              setForgot(false);
+              setVerifyf(true);
+              setTime(60);
+              timerRef.current = 60;
+              setOTPTimer();
+            } else if (result.status > 200) {
+              alert("handleForgot: " + result.message);
+            }
+            console.log(result);
+          })
+          .catch(error => {
+            console.log('Error handleForgot:', error);
+            dispatch(setLoading(false));
+            alert('Error handleForgot:' + error);
+          });
+      }
     }
   };
 
@@ -282,9 +359,9 @@ const Login = ({navigation}) => {
       await fetch(BaseURL + 'login', requestOptions)
         .then(response => response.json())
         .then(result => {
+          console.log(result);
           dispatch(setLoading(false));
           if (result.status === 200) {
-            console.log(result.data.JWT);
             dispatch(setGUser(false));
             dispatch(setJWT(result.data.JWT));
             dispatch(setMail(result.data.Email));
@@ -406,6 +483,181 @@ const Login = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
+      <Modal isOpen={loginWithNumOtp} onClose={() => setLoginWithNumOtp(false)} size="lg">
+        <Modal.Content maxWidth="600">
+            <Modal.CloseButton />
+            <Modal.Body>
+              <VStack space={3}>
+                <Box safeArea flex={1} p={2} w="90%" mx="auto">
+                  <VStack space={2}>
+                    <Heading size="lg" fontSize="lg">
+                      <Text>Verify Mobile Number</Text>
+                    </Heading>
+                    <Text fontSize={13} color="#8C8C8C">
+                      We sent a 6 Digit OTP to +91{phNo}
+                    </Text>
+
+                    <FormControl style={styles.vinput}>
+                      <Input 
+                      variant="filled" 
+                      width={"100%"}
+                      justifyContent={"flex-end"}
+                      bg="#f3f3f3"
+                      mt={0.5}
+                      // value={MobileNo} 
+                      // ref={mobileNumberRef}
+                      placeholder="Enter the OTP"
+                      onChangeText={text => {
+                        let ValOtpNum = OtpVal(text);
+                        if (ValOtpNum === false) {
+                          setErrOTP(true);
+                        } else {
+                          setErrOTP(false);
+                          setOtp(text);
+                        }
+                      }}
+                      borderRadius={5}
+                      keyboardType="numeric" 
+                      p={2}
+                      style={{justifyContent:"flex-end"}}
+                      />
+                    </FormControl>
+                    {ErrOTP === true ? (
+                      <Text style={{color: '#FF0000', fontSize: 9}}>
+                        {' '}
+                        * Please enter the OTP properly
+                      </Text>
+                    ) : null}
+
+                    <TouchableOpacity>
+                      <Button
+                        bg="#3e5160"
+                        colorScheme="blueGray"
+                        style={styles.cbutton}
+                        _pressed={{bg: '#fcfcfc', _text: {color: '#3e5160'}}}
+                        onPress={() => verifyOtp()}>
+                        Submit
+                      </Button>
+                    </TouchableOpacity>
+                  </VStack>
+                </Box>
+              </VStack>
+            </Modal.Body>
+          </Modal.Content>
+      </Modal>
+
+        <Modal isOpen={loginWithNum} onClose={() => setLoginWithNum(false)} size="lg">
+        <Modal.Content maxWidth="600">
+            <Modal.CloseButton />
+            <Modal.Body>
+              <VStack space={3}>
+                <Box safeArea flex={1} p={2} w="90%" mx="auto">
+                  <VStack space={2}>
+                    <Heading size="lg" fontSize="lg">
+                      <Text>Mobile Number</Text>
+                    </Heading>
+
+                    <FormControl style={styles.vinput}>
+                    <View>
+                      <PhoneInput
+                        defaultCode={`${countryCode}`}
+                        layout="first"
+                        textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
+                        codeTextStyle={{height:"150%",}}
+                        containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
+                        onChangeCountry={(country)=>{
+                          setCountryCode(country.cca2)
+                          if(Object.keys(country.callingCode).length > 0){
+                            setCallingCode(country.callingCode[0])
+                          } else {
+                            setCallingCode(null)
+                          }
+                        }}
+                      />
+                      <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
+                        <View style={{width:"40%",  marginLeft:'60%'}}>
+                          <Input 
+                          variant="filled" 
+                          width={"100%"}
+                          justifyContent={"flex-end"}
+                          bg="#f3f3f3"
+                          mt={0.5}
+                          // value={MobileNo} 
+                          // ref={mobileNumberRef}
+                          placeholder="Enter Mobile No."
+                          onChangeText={text => {
+                            setPhNo(text.trim())
+                          }}
+                          borderRadius={5}
+                          keyboardType="numeric" 
+                          p={2}
+                          style={{justifyContent:"flex-end"}}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                    </FormControl>
+                    {ErrVFMail === true ? (
+                      <Text style={{color: '#FF0000', fontSize: 9}}>
+                        {' '}
+                        * Please enter your email properly
+                      </Text>
+                    ) : null}
+
+                    <TouchableOpacity>
+                      <Button
+                        bg="#3e5160"
+                        colorScheme="blueGray"
+                        style={styles.cbutton}
+                        _pressed={{bg: '#fcfcfc', _text: {color: '#3e5160'}}}
+                        onPress={() => phoneNoSubmit()}>
+                        Submit
+                      </Button>
+                    </TouchableOpacity>
+                  </VStack>
+                </Box>
+              </VStack>
+            </Modal.Body>
+          </Modal.Content>
+        </Modal>
+
+        <Modal isOpen={selectMobileAccount} onClose={() => setSelectMobileAccount(false)} size="lg">
+        <Modal.Content maxWidth="600">
+            <Modal.CloseButton />
+            <Modal.Body>
+              <VStack space={3}>
+                <Box safeArea flex={1} p={2} w="90%" mx="auto">
+                  <VStack space={2}>
+                    <Heading size="lg" fontSize="lg">
+                      <Text>Mobile number login</Text>
+                    </Heading>
+                    <Text>Choose your account</Text>
+                    {
+                      mobileAccounts.map((data, index)=> {
+                        return (
+                          <TouchableOpacity onPress={()=>{
+                            loginWithMobileNum(data)
+                            // setSelectMobileAccount(false)
+                          }} key={index} style={{backgroundColor:"#f3f3f3"}}>
+                            <HStack alignItems="center" space={1}>
+                              <IconButton icon={ <EvilIcons name={'user'} size={30} mr="2" color="#000"/> }/>
+                              <VStack>
+                                <Text style={{color:'#364b5b',fontWeight:'bold',fontSize:11}}>{data.email}</Text>
+                                <Text style={{color:'#364b5b',fontWeight:'bold',fontSize:11}}>{data.mobileNumber}</Text>
+                              </VStack>
+                            </HStack>
+                            <Divider/>
+                          </TouchableOpacity>
+                        )
+                      })
+                    }
+                  </VStack>
+                </Box>
+              </VStack>
+            </Modal.Body>
+          </Modal.Content>
+        </Modal>
+
         <Modal isOpen={showRs} onClose={() => setRs(false)} size="lg">
           <Modal.Content maxWidth="900" Width="800">
             <Modal.CloseButton />
@@ -558,6 +810,7 @@ const Login = ({navigation}) => {
             </Modal.Body>
           </Modal.Content>
         </Modal>
+
         <Modal isOpen={showForgot} onClose={() => setForgot(false)} size="lg">
           <Modal.Content maxWidth="600">
             <Modal.CloseButton />
@@ -571,10 +824,12 @@ const Login = ({navigation}) => {
 
                     <FormControl style={styles.vinput}>
                       <Input
+                        ref={forgotMailRef}
                         variant="filled"
                         bg="#f3f3f3"
                         placeholder="Type your Email"
                         onChangeText={text => {
+                          setForgetEmailErr(false)
                           console.log(text);
                           let EVal = EmailVal(text);
                           if (EVal === true) {
@@ -587,6 +842,7 @@ const Login = ({navigation}) => {
                         }}
                       />
                     </FormControl>
+                    {forgetEmailErr ? <Text style={{color: '#FF0000', fontSize: 9}}>* This feild is require!</Text> : null}
                     {ErrVFMail === true ? (
                       <Text style={{color: '#FF0000', fontSize: 9}}>
                         {' '}
@@ -804,7 +1060,6 @@ const Login = ({navigation}) => {
                     }}
                     style={styles.google}
                     mt={2}
-                    mb={4}
                     onPress={() => onGoogleButtonPress()}>
                     <HStack
                       space={2}
@@ -818,6 +1073,15 @@ const Login = ({navigation}) => {
                       <Text style={styles.googletext} mt={1}>
                         Log In with Google
                       </Text>
+                    </HStack>
+                  </Button>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Button bg="white.100" disabled={GoogleSubmit} mb={4} onPress={() => setLoginWithNum(true)}
+                    _pressed={{ bg: 'white.100', _text: { color: '#ffffff', }, }} style={styles.google} >
+                    <HStack space={2} justifyContent="center" alignItems="center">
+                      <Image source={require('../../assets/ACSettings/ChangeNumber.png')} style={styles.googleimg} alt="Mobile Logo"/>
+                      <Text style={styles.googletext} mt={1}>Log In with Mobile</Text>
                     </HStack>
                   </Button>
                 </TouchableOpacity>

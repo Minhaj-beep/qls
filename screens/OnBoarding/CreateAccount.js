@@ -73,7 +73,7 @@ const CreateAccount = ({navigation}) => {
   const [Email, setEmail] = useState('');
   const [Password, setPassword] = useState('');
   const [CaOtp, setCaOtp] = useState();
-  const [MobileNo, setMobileNo] = useState();
+  const [MobileNo, setMobileNo] = useState('');
 
   const [emailAbs, setemailAbs] = useState('');
 
@@ -86,9 +86,16 @@ const CreateAccount = ({navigation}) => {
 
   const [showVmodal, setVmodal] = useState(false);
   const [resend, setresend] = useState(true);
+  const [countrycode, setCountryCode] = useState('IN');
 
   const [PhoneCountrycode, setPhoneCountrycode] = useState('IN');
   const [FormattedPhone, setFormattedPhone] = useState();
+
+  const firstNameRef = useRef()
+  const lastNameRef = useRef()
+  const mobileNumberRef = useRef()
+  const passwordRef = useRef()
+  const emailRef = useRef()
 
   const [time, setTime] = useState(60);
   const timerRef = useRef(time);
@@ -269,17 +276,16 @@ const CreateAccount = ({navigation}) => {
       lastName: LastName,
       email: Email,
       password: Password,
-      mobileNumber: `91${MobileNo}`,
+      mobileNumber: '+91' + MobileNo,
       userType: 'STUDENT',
     };
     dispatch(setLoading(true));
     if (
-      ErrEmail !== true &&
-      ErrPassword !== true &&
-      ErrFullName !== true &&
-      ErrMobile !== true &&
-      ErrMobile !== true &&
-      ErrLastName !== true
+      ErrEmail !== true && Email !== '' &&
+      ErrPassword !== true && Password !== '' &&
+      ErrFullName !== true && FullName !== '' &&
+      ErrMobile !== true && MobileNo !== '' &&
+      ErrLastName !== true && LastName !== ''
     ) {
       //API CALL
       //  let CallResponse = await FetchPost('none', body, 'register');
@@ -316,8 +322,28 @@ const CreateAccount = ({navigation}) => {
           alert(' API Error:', error);
         });
     } else {
+      if (FullName === ''){
+        firstNameRef.current.focus()
+        console.log('.current.focus()1')
+      } else if (LastName === '') {
+        lastNameRef.current.focus()
+        console.log('.current.focus()2')
+      } else if (Email ==='' || ErrEmail ) {
+        emailRef.current.focus()
+        console.log('.current.focus()3')
+      }
+       else if (ErrMobile || MobileNo === '' || MobileNo === null) {
+          mobileNumberRef.current.focus()
+          console.log('.current.focus()4')
+        } 
+        else if (Password === '' || ErrPassword ) {
+          passwordRef.current.focus()
+          console.log('.current.focus()5')
+      } else {
+        alert('Please enter the details properly!!!!');
+      }
       dispatch(setLoading(false));
-      alert('Please enter the details properly!');
+      // alert('Please enter the details properly!');
     }
     dispatch(setLoading(false));
   };
@@ -489,6 +515,7 @@ const CreateAccount = ({navigation}) => {
                   </Text>
                 </FormControl.Label>
                 <Input
+                  ref={firstNameRef}
                   variant="filled"
                   bg="#f3f3f3"
                   placeholder="Enter First Name"
@@ -541,6 +568,7 @@ const CreateAccount = ({navigation}) => {
                   </Text>
                 </FormControl.Label>
                 <Input
+                  ref={lastNameRef}
                   variant="filled"
                   bg="#f3f3f3"
                   placeholder="Enter Last Name"
@@ -574,6 +602,7 @@ const CreateAccount = ({navigation}) => {
                   </Text>
                 </FormControl.Label>
                 <Input
+                  ref={emailRef}
                   variant="filled"
                   bg="#f3f3f3"
                   placeholder="Enter your email"
@@ -602,34 +631,45 @@ const CreateAccount = ({navigation}) => {
                     {` *`}
                   </Text>
                 </Text>
+                <View>
                 <PhoneInput
                   ref={phoneInput}
-                  defaultValue={MobileNo}
                   defaultCode="IN"
                   layout="first"
-                  containerStyle={styles.PhoneInput}
-                  textInputStyle={{height: 70, alignSelf: 'center', paddingBottom:9}}
-                  onChangeText={text => {
-                    let ValT = MobileVal(text);
-                    if (ValT === true) {
-                      setErrMobile(false);
-                      setMobileNo(text);
-                    } else if (ValT !== true) {
-                      setErrMobile(true);
-                      setMobileNo(text);
-                    }
-                  }}
-                  onChangeFormattedText={(num)=> {
-                    setFormattedPhone(num.slice(1));
-                    let Rnum = num.slice(3);
-                    let ValT = MobileVal(Rnum);
-                    // console.log(ValT);
-                    if (ValT){
-                       let code = phone(num).countryIso2;
-                       setPhoneCountrycode(code);
-                    }
-                  }}
+                  onChangeCountry={(res)=>setCountryCode(res.cca2)}
+                  containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
+                  codeTextStyle={{height:"150%",}}
+                  textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
                 />
+                <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
+                  <View style={{width:"55%",  marginLeft:'45%'}}>
+                  <Input 
+                    variant="filled" 
+                    width={"100%"}
+                    justifyContent={"flex-end"}
+                    bg="#f3f3f3"
+                    mt={0.5}
+                    ref={mobileNumberRef}
+                    value={MobileNo}
+                    placeholder="Enter Mobile No."
+                    onChangeText={text => {
+                      let ValT = MobileVal(text);
+                      if (ValT === true) {
+                        setErrMobile(false);
+                        setMobileNo(text);
+                      } else if (ValT !== true) {
+                        setErrMobile(true);
+                        setMobileNo(text);
+                      }
+                    }}
+                    borderRadius={5}
+                    keyboardType="numeric" 
+                    p={2}
+                    style={{justifyContent:"flex-end"}}
+                  />
+                  </View>
+                </View>
+                </View>
 
                 {ErrMobile === true ? (
                   <Text style={{color: '#FF0000', fontSize: 9}}>
@@ -651,6 +691,7 @@ const CreateAccount = ({navigation}) => {
                   </Text>
                 </FormControl.Label>
                 <Input
+                  ref={passwordRef}
                   variant="filled"
                   bg="#f3f3f3"
                   placeholder="Enter your password"
