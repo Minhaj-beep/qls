@@ -7,6 +7,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import { Text,HStack,VStack, Modal,useToast,Button,Divider } from 'native-base';
 import moment from 'moment';
 import { setLoading } from '../Redux/Features/authSlice';
+import DownloadInvoice from './components/DownloadInvoice';
 
 const {width, height} = Dimensions.get('window');
 
@@ -39,8 +40,9 @@ const PaymentHistory = ({navigation}) => {
         setHistory(response.data);
         // console.log(response.data[1]);
       } else {
-        alert("GetPHistory :" + response.message);
+        // alert("GetPHistory :" + response.message);
         console.log("GetPHistory :" + response.message);
+        
       }
     } catch (error) {
       alert("GetPHistory :" + error.message);
@@ -48,6 +50,12 @@ const PaymentHistory = ({navigation}) => {
     }
     dispatch(setLoading(false))
   };
+
+  const download = (data) => {
+    console.log(data)
+    console.log(data.OData.items)
+    setShowModal(false);
+  }
 
   const RenderPaymentCard = ({props}) => {
     let time = moment(props.createdTime).format('DD MMM YYYY, hh:mm a');
@@ -73,7 +81,7 @@ const PaymentHistory = ({navigation}) => {
             <VStack style={{maxWidth:width / 1.5}}>
                 <HStack alignItems={'center'} space={1} maxWidth={width / 2.5}>
                   <Text color={'#000'} fontSize={13} fontWeight={'bold'}>Order ID</Text>
-                  <Text color={'geryScale.800'} fontSize={12} fontWeight={'bold'}>#{props.razorpayOrderId}</Text>
+                  <Text color={'gray.800'} fontSize={12} fontWeight={'bold'}>#{props.razorpayOrderId}</Text>
                 </HStack>
                 <Text color={'#000'} fontSize={11} fontWeight={'bold'}>{props.currencyCode} {props.total}</Text>
                 <Text color={'#8C8C8C'} fontSize={9}>{time}</Text>
@@ -97,7 +105,7 @@ const PaymentHistory = ({navigation}) => {
               <Text color={'greyScale.800'} fontWeight={'bold'} fontSize={12}>{index + 1}.</Text>
             </HStack>
             <HStack  justifyContent={'space-between'} width={width / 1.3} pl={1}>
-                <Text color={'greyScale.800'} fontWeight={'bold'} fontSize={12} maxWidth={width / 2.5}>{data.courseName}</Text>
+                <Text noOfLines={2} color={'greyScale.800'} fontWeight={'bold'} fontSize={12} maxWidth={width / 2.5}>{data.hasOwnProperty('courseName') ? data.courseName : data.assessmentTitle}</Text>
                 <Text color={'primary.100'} fontWeight={'bold'} fontSize={13}>{ModalData.OData.currencyCode} {data.fee}</Text>
             </HStack>
           </HStack>
@@ -140,16 +148,23 @@ const PaymentHistory = ({navigation}) => {
                 <Text fontSize={11} borderRadius={20} fontWeight={'bold'} color="primary.100">{ModalData.OData.currencyCode} {ModalData.OData.subTotal}</Text>
               </HStack>
               <HStack justifyContent="space-between" alignItems={'center'}>
-                <Text color="primary.100" fontWeight={'bold'} fontSize={12}>VAT({ModalData.OData.taxPercentage}%)</Text>
+                <Text color="primary.100" fontWeight={'bold'} fontSize={12}>VAT ({ModalData.OData.taxPercentage}%)</Text>
                 <Text fontSize={11} borderRadius={20} fontWeight={'bold'} color="primary.100">{ModalData.OData.currencyCode} {ModalData.OData.taxValue}</Text>
               </HStack>
+              {
+                ModalData.OData.hasOwnProperty('discountValue') && 
+                  <HStack justifyContent="space-between" alignItems={'center'}>
+                    <Text color="primary.100" fontWeight={'bold'} fontSize={12}>Discount ({ModalData.OData.discountPercentage}%)</Text>
+                    <Text fontSize={11} borderRadius={20} fontWeight={'bold'} color="primary.100">{ModalData.OData.currencyCode} {ModalData.OData.discountValue}</Text>
+                  </HStack>
+              }
               <HStack justifyContent="space-between" alignItems={'center'}>
                 <Text color="primary.100" fontWeight={'bold'} fontSize={13}>Total</Text>
                 <Text fontSize={13} borderRadius={20} fontWeight={'bold'} color="primary.100">{ModalData.OData.currencyCode} {ModalData.OData.total}</Text>
               </HStack>
 
             </VStack>
-            <Button
+            {/* <Button
               bg="#3e5160"
               colorScheme="blueGray"
               style={styles.cbutton}
@@ -157,11 +172,12 @@ const PaymentHistory = ({navigation}) => {
                 _text:{color: "#3e5160"}
                 }}
               onPress={()=>{
-                setShowModal(false);
+                download(ModalData)
               }}
             >
               Download Invoice
-            </Button>
+            </Button> */}
+            <DownloadInvoice props={ModalData.OData} />
             </VStack>
             }
           </Modal.Body>
@@ -182,7 +198,7 @@ const PaymentHistory = ({navigation}) => {
                 })
               }
             </VStack>
-            : null
+            : <Text alignSelf={'center'} color={'gray.400'} mt={5} fontSize={'xs'} bold>No Payment History found!</Text>
           }
         </VStack>
       </ScrollView>
