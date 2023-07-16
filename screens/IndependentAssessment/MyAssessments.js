@@ -41,30 +41,32 @@ const MyAssessments = () => {
             let response = await GetPurchasedCourses(email)
             if (response.status === 200){
                 let arr = []
+                // filtering out assessmets from courses
                 response.data.map((i)=>{
                     if(i.assessmentCode){
                         arr = [...arr, i]
                     }
                 })
-                let cc = []
-                let pc = []
+                let cc = [] // for completed courses
+                let pc = [] // for purchaged courses
                 if(Object.keys(arr).length > 0) {
                     arr.map((i)=>{
                         if(i.isCompleted){
-                            cc = [...cc, i]
+                            cc = [...cc, i] // if assessments has been tried before
                         } else {
-                            pc = [...pc, i]
+                            pc = [...pc, i] // these are the fresh assessments 
                         }
                     })
                 }
                 arr.map((i)=>console.log(i))
-                setAllPurchagedCourses(pc)
+                setAllPurchagedCourses(arr) // I am not sure why but they want all assessment in purchaged tab, there shoud only fresh assessment need be render 
                 setAllCompletedCourses(cc)
             } else {
                 console.log('getPurchagesHistory 1', response.message)
             }
         } catch (e) {
             console.log('getPurchagesHistory 2', e)
+            getPurchagesHistory()
         }
     }
 
@@ -73,7 +75,7 @@ const MyAssessments = () => {
             <AppBar props={AppBarContent} />
 
             <View style={{width:"95%", marginTop:5, alignSelf:"center", backgroundColor:"grey", borderRadius:5, flexDirection:"row", justifyContent:"space-between", }}>
-                <Button onPress={()=>changeSelected("Messages")} size="md" variant={selected === "Messages" ? "subtle" : "ghost" } _text={{color: '#FFF', fontSize: 14, fontWeight:"600" }} borderRadius={5} style={{width:"50%", }}>Purchaged</Button>
+                <Button onPress={()=>changeSelected("Messages")} size="md" variant={selected === "Messages" ? "subtle" : "ghost" } _text={{color: '#FFF', fontSize: 14, fontWeight:"600" }} borderRadius={5} style={{width:"50%", }}>Purchased</Button>
                 <Button onPress={()=>changeSelected("Notifications")} size="md" variant={selected === "Messages" ? "ghost" : "subtle" } _text={{color: '#FFF', fontSize: 14, fontWeight:"600" }} borderRadius={5} style={{width:"50%", }}>Completed</Button>
             </View>
             {
@@ -103,7 +105,7 @@ const MyAssessments = () => {
                 </>
                 : 
                 <View style={{flex:1, alignItems:"center", justifyContent:"center"}}>
-                    <Text mt={5} style={{fontSize:15, alignSelf:"center", borderRadius:5,fontWeight:'bold'}} color={'primary.100'}>Your purchaged courses are empty!</Text>
+                    <Text mt={5} style={{fontSize:15, alignSelf:"center", borderRadius:5,fontWeight:'bold'}} color={'primary.100'}>Your purchased courses are empty!</Text>
                 </View>
             }
         </View>

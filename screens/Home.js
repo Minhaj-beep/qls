@@ -32,6 +32,9 @@ import {
   setGUser,
   setLoading,
   setNavigation,
+  setUser_ID,
+  setTempName,
+  setIsLoggedInWithMobile,
 } from './Redux/Features/authSlice';
 import {BaseURL} from './StaticData/Variables';
 import {
@@ -47,6 +50,8 @@ import RenderCarousel from './components/Home/RenderCarousel';
 import {GetLCourses} from './Functions/API/GetLiveCourses';
 import AppLink from 'react-native-app-link'
 import axios from 'axios';
+import Categories from './components/Home/Categories'
+import PushNotification from 'react-native-push-notification'
 // import {phone} from 'phone';
 
 const {width, height} = Dimensions.get('window');
@@ -63,6 +68,31 @@ const Home = ({navigation}) => {
     CheckLogin();
     // console.log(phone('+916382154544'));
   }, []);
+
+  const screenProps = {
+    action: 'Message',
+    fullName: "Jibo  Ram",
+    id: "63c8dc10247f96dba902379d",
+    lastActive: "2023-05-17T04:49:42.265Z",
+    message: "Hola",
+    profileImgPath: 'https://ql-files.s3.ap-south-1.amazonaws.com/images/image-1676614220331.jpg'
+  }
+
+  PushNotification.configure({
+    onNotification: function (notification) {
+      console.log("NOTIFICATION:", notification);
+      navigation.navigate('Inbox', {instructor: screenProps})
+    },
+
+    onAction: function (notification) {
+      console.log("ACTION:", notification.action)
+      console.log("NOTIFICATION:", notification)
+    },
+
+    onRegistrationError: function(err) {
+      console.error(err.message, err)
+    }
+  });
 
   const becomeAnInstructor = async() => {
     AppLink.maybeOpenURL('qlearninginstructor://', { 
@@ -132,7 +162,15 @@ const Home = ({navigation}) => {
 
   const CheckLogin = async () => {
     let jwt = await AsyncStorage.getItem('JWT')
-    dispatch(setJWT(jwt.substring(1, jwt.length-1)))
+    if(jwt !== null) dispatch(setJWT(jwt.substring(1, jwt.length-1)))
+    let userId = await AsyncStorage.getItem('User_ID')
+    if(userId !== null) dispatch(setUser_ID(JSON.parse(userId)))
+    let gUser = await AsyncStorage.getItem('GUser')
+    if(gUser !== null) dispatch(setGUser(JSON.parse(gUser)))
+    let TempName = await AsyncStorage.getItem('TempName')
+    if(TempName !== null) dispatch(setTempName(JSON.parse(TempName)))
+    let IsLoggedInWithMobile = await AsyncStorage.getItem('IsLoggedInWithMobile')
+    if(IsLoggedInWithMobile !== null) dispatch(setIsLoggedInWithMobile(JSON.parse(IsLoggedInWithMobile)))
     dispatch(setLoading(true));
     await AsyncStorage.getItem('Email')
       .then(email => {
@@ -176,7 +214,7 @@ const Home = ({navigation}) => {
         .then(response => response.json())
         .then(result => {
           if (result.status === 200) {
-            // console.log(result.data.profileImgPath);
+            console.log(result, 'Here the users profile data.');
             dispatch(setProfileData(result.data));
             if (result.data.profileImgPath != null) {
               console.log('Profile image retrieved');
@@ -444,6 +482,7 @@ const Home = ({navigation}) => {
           Categories
         </Text> */}
         {/* <Chip props={Flist} /> */}
+        <Categories />
 
         <VStack ml={4} mr={4} mt={5} mb={5} space={2}>
           {/* <HCarousel props="Recent Views"/> */}

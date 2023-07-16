@@ -15,7 +15,7 @@ const MarkAllAsRead = async (email, id) => {
     }),
   };
   const response = await fetch(
-    BaseURL + '/v1/notifications/markAllAsRead',
+    BaseURL + 'v1/notifications/markAllAsRead',
     requestOptions,
   )
   return response.json();

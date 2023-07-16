@@ -38,7 +38,7 @@ const RenderCarousel = items => {
           const DD = { CDD : item, type: items.type};
           dispatch(setSCData(DD));
           // if (items.type === 'Live') {
-            navigation.navigate('SCView');
+            navigation.navigate('ViewLiveCourse');
           // } else {
           //   navigation.navigate('LiveSCView');
           // }
@@ -51,28 +51,15 @@ const RenderCarousel = items => {
 
   return (
     <View>
-      <HStack
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-        ml={4}
-        mr={4}>
-        <Text style={{color: '#000000', fontSize: 16, fontWeight: 'bold'}}>
-          {title}
-        </Text>
+      <HStack justifyContent="space-between" alignItems="center" mb={3} ml={4} mr={4}>
+        <Text style={{color: '#000000', fontSize: 16, fontWeight: 'bold'}}>{title}</Text>
         <TouchableOpacity onPress={() => {
           dispatch(setSearchA(true));
           dispatch(setSearchData(Data));
-          navigation.navigate('Tabs', {screen: 'SearchTab'});
+          // navigation.navigate('Tabs', {screen: 'SearchTab'});
+          navigation.navigate('SeeAll', {data:Data, name:title})
         }}>
-          <Text
-            style={{
-              color: '#395061',
-              fontSize: 12,
-              fontWeight: 'bold',
-            }}>
-            See All
-          </Text>
+          <Text style={{ color: '#395061', fontSize: 12, fontWeight: 'bold',}}>See All</Text>
         </TouchableOpacity>
       </HStack>
       <FlatList

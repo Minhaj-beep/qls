@@ -17,7 +17,7 @@ const DeactivateAccount = async (email) => {
     },
   };
   const response = await fetch(
-    BaseURL + '/deactivateAccount',
+    BaseURL + 'deactivateAccount',
     requestOptions,
   );
   return response.json();

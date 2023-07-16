@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Text } from 'native-base';
 import io from 'socket.io-client';
@@ -8,42 +8,50 @@ import {useDispatch,useSelector} from 'react-redux';
 import AppBar from '../components/Navbar';
 import WebView from 'react-native-webview'
 const {height, width} = Dimensions.get('window')
+import { CoursePurchaseCheck } from '../Functions/API/CoursePurchaseCheck';
 
 const LiveClass = ({navigation, route}) => {
-  const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
-  const [peer, setPeer] = useState(null);
-  const [socket, setSocket] = useState(null);
-  const [connection, setConnection] = useState(null);
-  const [remotePeerId, setRemotePeerId] = useState(null);
+  const [authResponse, setAuthResponse] = useState(null);
+  const webViewRef = useRef(null);
   const LiveClassData = route.params.LiveClassData
   const [url, setUrl] = useState(null)
   console.log('Live Class Data: ', LiveClassData)
   const ProfileD = useSelector(state => state.Auth.ProfileData);
+  const email = useSelector(state => state.Auth.Mail);
+  const CData = useSelector(state => state.Course.SCData);
+  console.log(CData.CDD)
   const UserName = ProfileD.firstName + ' ' + ProfileD.lastName
 
   useEffect(()=>{
-    var token = LiveClassData.joinLiveLink.split('?')
-    mediaDevices.getUserMedia({
-            audio: true,
-            video: true,
-        })
-        .then((stream) => {
-            myVideoStream = stream;
-            var peer = new Peer(undefined, {
-                path: "/peerjs",
-                host: "live.qlearning.academy",
-                port: "", //443
-                secure: true,  
-            });
-            console.log("Connected on default Port");
-            peer.on("open", (id) => {
-                console.log("join-room", id);
-                setUrl(`https://dev.qlearning.academy/live-room-app/${LiveClassData.liveUUID}?${token[1]}`)
-                console.log(`https://dev.qlearning.academy/live-room-app/${LiveClassData.liveUUID}?${token[1]}`)
-            });
-        })
+    checkAuth()
+    if(LiveClassData.hasOwnProperty('joinLiveLink')) {
+      var token = LiveClassData.joinLiveLink.split('?')
+      // console.log('token: ', token)
+      let s = LiveClassData.joinLiveLink.replace('undefined/', '')
+      if(CData.CDD.isLive) {
+        // Folowing code is for live course
+        setUrl(`https://uat.qlearning.academy/live-room-app/${s}&email=${email}`)
+        console.log(`App recorded token: https://uat.qlearning.academy/live-room-app/${s}&email=${email}`)
+      } else {
+        // Following code is for recorded live course
+      setUrl(`https://uat.qlearning.academy/live-room-app/${LiveClassData.liveUUID}?${token[1]}&email=${email}&coursecode=${LiveClassData.liveUUID}`)
+      console.log(`https://uat.qlearning.academy/live-room-app/${LiveClassData.liveUUID}?${token[1]}&email=${email}&coursecode=${LiveClassData.liveUUID}`)
+      }
+    } else {
+      alert ('Instructor has not started the class yet. Kindly try again later!')
+      navigation.goBack()
+    }
   }, [])
+
+  const checkAuth = async () => {
+    try {
+      const result = await CoursePurchaseCheck(CData.CDD.courseCode, email)
+      setAuthResponse(result)
+      console.log('__________________RESULT', result)
+    } catch (e) {
+      console.log('__________EEEEEEEEE', e)
+    }
+  }
 
   const AppBarContent = {
     title: 'Live Class',
@@ -53,15 +61,24 @@ const LiveClass = ({navigation, route}) => {
     RightIcon2:'person'                  
   }
 
-  // let url = 'https://dev.qlearning.academy/live-room-app/d735094c-b110-4cc8-bcaf-406712370d5d?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb3Vyc2VDb2RlIjoiNjUxYTlkN2EtNDdjOC00M2NjLWJkMTgtYzhmYjMyZGE5MWM2Iiwic3R1ZGVudEVtYWlsIjoic2FqaXNlNDMyNUBuZXZ5eHVzLmNvbSIsInN0dWRlbnROYW1lIjoiTWluICBBaG0iLCJpc0xpdmVDb3Vyc2UiOnRydWUsImNsYXNzVGltZSI6IkZlYiAxNiwgMjAyMyA4OjU5IEFNIiwibGl2ZUNsYXNzT3JkZXIiOjYsImxpdmVDbGFzc0lkIjoiNjNlZGVmYjM0ZTVmNGMwZGNkMGZjM2U0IiwidG9waWNOYW1lIjoiV2ViUlRDIGluIG1vYmlsZSB0ZXN0IiwibGl2ZVVVSUQiOiJkNzM1MDk0Yy1iMTEwLTRjYzgtYmNhZi00MDY3MTIzNzBkNWQiLCJ1c2VyVHlwZSI6IlNUVURFTlQiLCJpYXQiOjE2NzY1Mzk3MTF9.kxoKmaBUar2ManaM8aRDXl6510gAdt34F8BDr0hW6aw'
+  const data = {
+    type: 'MY_DATA_TYPE',
+    payload: authResponse
+  };
+
+  const jsCode = `
+  window.postMessage(${JSON.stringify(data)}, '*');
+  `;
 
   return (
     <View style={styles.TopContainer}>
       <AppBar props={AppBarContent}/>
       {
-        url !== null ?
+        url !== null && authResponse !== null ?
         <WebView
-        style={{height:'100%', width:'100%', backgroundColor:"red"}} 
+        ref={webViewRef}
+        injectedJavaScript={jsCode}
+        style={{height:'100%', width:'100%'}} 
         source={{ uri: url }} 
         allowsInlineMediaPlayback={true} 
         mediaPlaybackRequiresUserAction={false}

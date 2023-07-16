@@ -25,12 +25,14 @@ import CourseCard from '../components/Courses/CourseCard';
 import {GetPurchasedCourses} from '../Functions/API/GetPurchasedCourses';
 import {useSelector, useDispatch} from 'react-redux';
 import {setSCData} from '../Redux/Features/CourseSlice';
+import { setLoading } from '../Redux/Features/authSlice';
 
 const {width, height} = Dimensions.get('window');
 
 const Courses = ({navigation}) => {
   const email = useSelector(state => state.Auth.Mail);
   const [PCourses, setPCourses] = useState();
+  const [loader, setLoader] = useState(true)
   const dispatch = useDispatch();
   const AppBarContent = {
     title: 'Courses',
@@ -48,6 +50,7 @@ const Courses = ({navigation}) => {
   },[navigation]);
 
   const GetPC = async() => {
+    // dispatch(setLoading(true))
      try {
       let response = await GetPurchasedCourses(email);
       console.log(email)
@@ -57,15 +60,19 @@ const Courses = ({navigation}) => {
           console.log('this is da data: ' + response.data)
           console.log('PC courses retrieved successfully');
         }
+        setLoader(false)
       } else {
         console.log(response)
         alert("GetPC error: " + response.message);
-        console.log("GetPC error: " + response.message);
+        console.log("GetPC error: 1" + response.message);
+        setLoader(false)
       }
      } catch (err) {
-      console.log("GetPC error: " + err.message);
+      console.log("GetPC error: 2" + err.message);
       alert('Error: ' + err.message);
+      setLoader(false)
      }
+    //  dispatch(setLoading(false))
   };
   
 
@@ -75,33 +82,40 @@ const Courses = ({navigation}) => {
       <ScrollView
         contentContainerStyle={styles.TopContainer}
         nestedScrollEnabled={true}>
-        {
-          PCourses ?
-          <VStack space={2}>
-            {
-            PCourses.map((data, index)=> {
-              return (
-              <TouchableOpacity
-              onPress={()=>{
-                // console.log(data);
-                const DD = { CDD : data, type: 'Purchased'};
-                dispatch(setSCData(DD));
-                navigation.navigate('SCView');
-              }}
-              key={index}
-              >
-                {
-                  data.courseCode ?
-                  <CourseCard props={data}/>
-                  : <></>
-                }
-              </TouchableOpacity>
-              );
-            })
+          {
+            loader ?
+            <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>Loading ...</Text>
+            :
+            <>
+              {
+                PCourses ?
+                <VStack space={2}>
+                  {
+                  PCourses.map((data, index)=> {
+                    return (
+                    <TouchableOpacity
+                    onPress={()=>{
+                      // console.log(data);
+                      const DD = { CDD : data, type: 'Purchased'};
+                      dispatch(setSCData(DD));
+                      navigation.navigate('ViewLiveCourse');
+                    }}
+                    key={index}
+                    >
+                      {
+                        data.courseCode ?
+                        <CourseCard props={data}/>
+                        : <></>
+                      }
+                    </TouchableOpacity>
+                    );
+                  })
+                    }
+                </VStack>
+                : <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>No Courses to show {':('}</Text>
               }
-          </VStack>
-          : <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>No Courses to show {':('}</Text>
-        }
+            </>
+          }
       </ScrollView>
     </SafeAreaView>
   );

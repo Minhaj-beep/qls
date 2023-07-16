@@ -45,7 +45,7 @@ const AccountActivity = ({navigation}) => {
         .then(result => {
           if (result.status === 200) {
             setActivity(result.data);
-            // console.log(result.data);
+            console.log(result.data);
             dispatch(setLoading(false));
           } else if (result.status > 200) {
             dispatch(setLoading(false));
@@ -70,6 +70,10 @@ const AccountActivity = ({navigation}) => {
 
   const RenderNotification = () => {
     return activity.map(act => {
+      // let date = null
+      // if(act.time){
+      //   date = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'medium' }).format(act.time);
+      // }
       return (
         <View key={act.data}>
           <HStack space={3} alignItems="center" maxWidth={width / 0.5} mt={3}>
@@ -87,7 +91,7 @@ const AccountActivity = ({navigation}) => {
               <Text style={{color: '#000000', fontWeight: 'bold', fontSize: 16}}>
                 {act.header}
               </Text>
-              <Text noOfLines={2} style={{color: '#395061', fontSize: 13}}>{act.data}</Text>
+              <Text style={{color: '#395061', fontSize: 13}}>{act.data} {act.time ? new Date(act.time).toLocaleString() : null}</Text>
               {/* <Text style={{color:"#8C8C8C", fontSize:10}}>04 Oct 2021 at 5:01 PM</Text> */}
             </VStack>
           </HStack>

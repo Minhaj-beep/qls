@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import Navbar from '../components/Navbar';
 import { useNavigation } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
-import { Text, VStack, HStack, Button, Heading, Image, Center, Input, useToast, } from 'native-base';
+import { Text, VStack, HStack, Button, Modal, Image, Center, Input, useToast, FormControl } from 'native-base';
 import { StyleSheet, View, SafeAreaView, ScrollView, Dimensions,} from 'react-native';
 import { CheckoutNow } from "../Functions/API/CheckoutNow";
 import { CheckoutNowAssessment } from "../Functions/API/CheckoutNowAssessment";
@@ -16,7 +16,11 @@ import { setLoading } from "../Redux/Features/authSlice";
 import { PaymentVerification } from "../Functions/API/PaymentVerification";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import RazorpayCheckout from 'react-native-razorpay';
+import { AirbnbRating } from "react-native-ratings";
 import { CountryRegionData } from "./Countries";
+import { GetDiscountForBuyNow } from "../Functions/API/GetDiscountsForBuyNow";
+import { ApplyPromoCode } from "../Functions/API/ApplyPromoCode";
+import Invoice from "./Invoice";
 const {height, width} = Dimensions.get('window')
 
 const BuyNow = () => {
@@ -26,16 +30,24 @@ const BuyNow = () => {
     const course = useSelector(state => state.Course.BuyNowCourse)
     const ProfileData = useSelector(state => state.Auth.ProfileData);
     const email = useSelector(state => state.Auth.Mail);
+    const JWT = useSelector(state => state.Auth.JWT);
     const [checkOutData, setCheckOutData] = useState(null)
     const [country, setCountry] = useState(null)
     const [countries, setCountries] = useState(null)
     const [address1, setAddress1] = useState(null)
     const [address2, setAddress2] = useState(null)
+    const [address1Err, setAddress1Err] = useState(false)
+    const [address2Err, setAddress2Err] = useState(false)
     const [region, setRegion] = useState(null)
     const [regions, setRegions] = useState(null)
     const [isFocus, setIsFocus] = useState(false);
     const [countryError, setCountryError] = useState(null)
     const [regionError, setRegionError] = useState(null)
+    const [isEmptyComponent, setIsEmptyComponet] = useState(false)
+    const [coupon, setCoupon] = useState(null)
+    const [couponList, setCouponList] = useState([])
+    const [showSuccessPurchase, setShowSuccessPurchase] = useState(false)
+    const [orderId, setOrderId] = useState('')
     const countryRef = useRef()
     const address2Ref = useRef()
     const address1Ref = useRef()
@@ -44,7 +56,54 @@ const BuyNow = () => {
     useEffect(()=> {
         getCountries()
         GetCheckOutData()
+        getDiscountForBuyNow()
     },[])
+
+    // // Calling apply coupon each time as the value of coupon get changes
+    // useEffect(()=>{
+    //   if(coupon !== null){
+    //     applyPromoCode()
+    //   }
+    // },[coupon])
+
+    // Apply coupon for buy now course or assessment
+    const applyPromoCode = async () => {
+      try {
+        const result = await ApplyPromoCode(email, coupon)
+        if(result.status === 200) {
+          console.log(result, 'Promo applied successfully')
+          GetCheckOutData()
+        } else {
+          console.log('applyPromoCode error 1 :', result)
+        }
+      } catch (e) {
+        console.log('applyPromoCode error 2 :', e)
+      }
+    }
+
+    // Get discount for course or assessment
+    const getDiscountForBuyNow = async() => {
+      try {
+        const result = await GetDiscountForBuyNow(email, course.courseCode)
+        if(result.status === 200) {
+          console.log('getDiscountForBuyNow', result.data)
+          let coupons = []
+          result.data.map((i)=> {
+            let obj = {
+                label: i.couponName,
+                value: i.couponName
+            }
+            coupons = [ ...coupons, obj]
+            setCouponList(coupons)
+          })
+        } else {
+          console.log('==getDiscountForBuyNow==1 ', result)
+        }
+      } catch (e) {
+        getDiscountForBuyNow()
+        console.log('==getDiscountForBuyNow==2 ', e)
+      }
+    }
 
     const AddTC = async () => {
       if(course.courseCode){
@@ -106,6 +165,7 @@ const BuyNow = () => {
       };
       RazorpayCheckout.open(options).then((dd) => {
         console.log('Razor pay payment data: ', dd)
+        setOrderId(dd.razorpay_order_id)
         VerifyPayment(dd.razorpay_order_id, dd.razorpay_payment_id, dd.razorpay_signature);
       }).catch((error) => {
         // GetPCart()
@@ -121,7 +181,7 @@ const BuyNow = () => {
         let CheckO = await PaymentVerification(email, oi, pi,sign);
           if ( CheckO.status === 200){
             dispatch(setLoading(false));
-            course.courseCode ? navigation.navigate('Courses') : navigation.navigate('MyAssessments')
+            setShowSuccessPurchase(true)
           } else {
             alert('VerifyPayment error')
             // setShowSuccess(false);
@@ -139,16 +199,18 @@ const BuyNow = () => {
       } else if (region === null || region === '') {
         setRegionError('Please select a region!')
       } else if (address1 === null || address1 === ''){
-        console.log(address1)
+        // console.log(address1)
+        setAddress1Err(true)
         address1Ref.current.focus()
       } else if (address2 === null || address2 === '') {
-        console.log(address2)
+        // console.log(address2)
+        setAddress2Err(true)
         address2Ref.current.focus()
       } else {
         try {
           console.log(email, course.courseCode, 'These are the data')
           let CheckO 
-          course.courseCode ? CheckO = await CheckoutNowPost(email, course.courseCode ) : CheckO = await CheckoutNowPostAssessment(email, course.assessmentCode )
+          course.courseCode ? CheckO = await CheckoutNowPost(email, course.courseCode, coupon ) : CheckO = await CheckoutNowPostAssessment(email, course.assessmentCode )
           if ( CheckO.status === 200){
             CheckoutRazorpay(CheckO.data);
           } else {
@@ -166,7 +228,7 @@ const BuyNow = () => {
                 alert('Something is wrong, please login again');
             } else {
                 let result 
-                course.courseCode ? result = await CheckoutNow(email, course.courseCode ) : result = await CheckoutNowAssessment(email, course.assessmentCode )
+                course.courseCode ? result = await CheckoutNow(email, course.courseCode, coupon ) : result = await CheckoutNowAssessment(email, course.assessmentCode )
             if (result.status === 200) {
                 let cartD = result.data;
                 console.log('Get vat and all => ', cartD)
@@ -176,6 +238,7 @@ const BuyNow = () => {
             }
         }
     } catch (e) {
+        GetCheckOutData()
         console.log('Error: ' + e.message);
     }
     return null
@@ -216,7 +279,7 @@ const BuyNow = () => {
 
 
     const CartCard = ({props}) => {
-        // console.log('props: ', props)
+        console.log('props: ', props)
         const cName = props.courseName ? props.courseName : props.assessmentTitle
         const courseT = cName.length > 25 ? cName.slice(0,25) + '...' : cName;
         const currency = props.currency === 'INR' ? '₹' : '$';
@@ -292,70 +355,24 @@ const BuyNow = () => {
     
                   <HStack alignItems={'center'} justifyContent={'space-between'}>
             <HStack space={2} style={{alignItems: 'center'}}>
-              { props.RatingCount ?
-              <HStack space={1}>
-                  <HStack space={1}>
-                    {
-                  [...Array(props.RatingCount)].map((e, i) =>{
-                      return (
-                        <Image
-                          key={i}
-                          source={require('../../assets/Home/star.png')}
-                          alt="rating"
-                          size="3"
-                        />
-                      );
-                    }
-                  )
-                }
-                {
-                  [...Array(5 - props.RatingCount)].map((e, i) =>{
-                      return (
-                        <Image
-                          key={i}
-                          source={require('../../assets/Home/unstar.png')}
-                          alt="rating"
-                          size="3"
-                        />
-                      );
-                    }
-                  )
-                }
-                  </HStack>
-              </HStack>
-              :
+              
                 <HStack space={1}>
-                  <Image
-                    source={require('../../assets/Home/unstar.png')}
-                    alt="rating"
-                    size="3"
-                  />
-                  <Image
-                    source={require('../../assets/Home/unstar.png')}
-                    alt="rating"
-                    size="3"
-                  />
-                  <Image
-                    source={require('../../assets/Home/unstar.png')}
-                    alt="rating"
-                    size="3"
-                  />
-                  <Image
-                    source={require('../../assets/Home/unstar.png')}
-                    alt="rating"
-                    size="3"
-                  />
-                  <Image
-                    source={require('../../assets/Home/unstar.png')}
-                    alt="rating"
-                    size="3"
+                  <AirbnbRating
+                    count={5}
+                    isDisabled={true}
+                    showRating={false}
+                    defaultRating={`${props.rating}`}
+                    size={10}
+                    value={`${props.rating}`}
                   />
                 </HStack>
+              
+              {
+                props.ratingCount !== 0 && props.hasOwnProperty('rating')  ?
+                <Text style={{fontSize: 11}}>{props.rating.toFixed(1)} ({props.ratingCount})</Text>
+                :
+                <Text style={{fontSize: 11}}>0(0)</Text>
               }
-    
-              <Text style={{fontSize: 11}}>
-                {props.rating} ({props.ratingCount ? props.ratingCount : 0})
-              </Text>
             </HStack>
                     <View>
                       <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000000',}}>
@@ -393,157 +410,257 @@ const BuyNow = () => {
     return (
         <View style={{width:width*0.95, alignSelf:"center"}}>
             <Navbar props={AppBarContent}/>
-            <CartCard props={course} />
-            <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Billing Address</Text>
-            <View style={{marginTop:10, marginBottom:5}}>
-             {
-                countries !== null ?
-                <Dropdown
-                    style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    iconStyle={styles.iconStyle}
-                    itemTextStyle={{color:"#364b5b"}}
-                    data={countries}
-                    ref={countryRef}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={'Select country'}
-                    searchPlaceholder="Search..."
-                    value={country}
-                    onFocus={() => setIsFocus(true)}
-                    onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                        setCountry(item.value);
-                        setRegion(null);
-                        getRegions(item.value)
-                        setCountryError(null)
-                        setIsFocus(false);
-                    }}
-                />
-                : <></>
-             }
-             {countryError !== null ? <Text style={{marginLeft:5, color:"red"}}>{countryError}</Text> : <></>}
-            </View>
-            <View style={{marginTop:5, marginBottom:10}}>
-            {
-                regions !== null ?
-                <Dropdown
-                    style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    inputSearchStyle={styles.inputSearchStyle}
-                    iconStyle={styles.iconStyle}
-                    itemTextStyle={{color:"#364b5b"}}
-                    data={regions}
-                    ref={regionRef}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder={'Select region'}
-                    searchPlaceholder="Search..."
-                    value={region}
-                    onFocus={() => setIsFocus(true)}
-                    onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                        setRegion(item.value);
-                        setRegionError(null)
-                        setIsFocus(false);
-                    }}
-                />
-                : <></>
-             }
-             {regionError !== null ? <Text style={{marginLeft:5, color:"red"}}>{regionError}</Text> : <></>}
-            </View>
-            <View>
-                <Input 
-                    placeholder="Address line 1"
-                    ref={address1Ref}
-                    onChangeText={(text)=>{
-                      console.log(text.trim())
-                      setAddress1(text.trim())
-                    }}
-                />
-            </View>
-            <View style={{marginVertical:10}}>
-                <Input 
-                    placeholder="Address line 2"
-                    ref={address2Ref}
-                    onChangeText={(text)=>{
-                      console.log(text)
-                      setAddress2(text.trim())
-                    }}
-                />
-            </View>
-            {checkOutData !== null ? 
-                <View style={{width:width*0.9, alignSelf:"center"}}>
-                    <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Order Summary</Text>
-                    <HStack justifyContent="space-between">
-                        <Text
-                            color={'greyScale.800'}
-                            style={{fontSize: 13, fontWeight: 'bold'}}>
-                            Sub Total
-                        </Text>
-                        <Text
-                            color={'primary.100'}
-                            style={{fontSize: 13, fontWeight: 'bold'}}>
-                            {checkOutData.currencyCode} {checkOutData.subTotal}
-                        </Text>
-                        </HStack>
-                        <HStack justifyContent="space-between">
-                        <Text
-                            color={'greyScale.800'}
-                            style={{fontSize: 13, fontWeight: 'bold'}}>
-                            Discount ({checkOutData.discountPercentage ? checkOutData.discountPercentage : '0'}%)
-                        </Text>
-                        <Text
-                            color={'primary.100'}
-                            style={{fontSize: 13, fontWeight: 'bold'}}>
-                            {checkOutData.currencyCode  === 'USD' ? '$' : '₹'} {checkOutData.discountValue ? checkOutData.discountValue : 0}
-                        </Text>
-                        </HStack>
-                        <HStack justifyContent="space-between">
-                        <Text
-                            color={'greyScale.800'}
-                            style={{fontSize: 13, fontWeight: 'bold'}}>
-                            Vat ({checkOutData.taxPercentage}%)
-                        </Text>
-                        {
-                          checkOutData.taxValue ?
-                          <Text
-                              color={'primary.100'}
-                              style={{fontSize: 13, fontWeight: 'bold'}}>
-                              {checkOutData.currencyCode  === 'USD' ? '$' : '₹'} {Number.isInteger(checkOutData.taxValue) ? checkOutData.taxValue : checkOutData.taxValue.toFixed(2)}
-                          </Text>
-                          : 
-                          <Text
-                              color={'primary.100'}
-                              style={{fontSize: 13, fontWeight: 'bold'}}>0</Text>
-                        }
-                        </HStack>
 
-                        <HStack justifyContent="space-between" mt={8}>
-                        <VStack>
-                            <Text
-                            color={'greyScale.800'}
-                            style={{fontSize: 12, fontWeight: 'bold'}}>
-                            Total
-                            </Text>
-                            <Text
-                            color={'primary.100'}
-                            style={{fontSize: 16, fontWeight: 'bold'}}>
-                            {checkOutData.currencyCode} {checkOutData.total}
-                            </Text>
-                        </VStack>
-                        <Button colorScheme={'primary'} onPress={()=> CheckoutServer()}>Checkout</Button>
-                        </HStack>
+            {/* Modal to show successfull purchase */}
+            <Modal isOpen={showSuccessPurchase}>
+              <Modal.Content maxWidth="700px">
+                <Modal.Body>
+                  <VStack safeArea flex={1} p={2} w="90%" mx="auto" space={5} justifyContent="center" alignItems="center">
+                    <Image source={require('../../assets/success_tick02.png')} resizeMode="contain" size="150" alt="successful" />
+                    <Text fontWeight="bold" color={'black'} fontSize="17">Payment Successfully Done</Text> 
+                    <HStack space={1}>
+                    <Invoice props={checkOutData} orderId={orderId} />
+                    <Button 
+                      bg={'primary.900'}
+                      colorScheme="blueGray"
+                      style={{paddingTop:10,paddingBottom:10,paddingLeft:40, paddingRight:40}}
+                      _pressed={{bg: "#fcfcfc",
+                        _text:{color: "#3e5160"}
+                        }}
+                        onPress={()=>{
+                          setIsEmptyComponet(true)
+                          course.courseCode ? navigation.navigate('Courses') : navigation.navigate('MyAssessments')
+                        }}
+                        >
+                      Done
+                    </Button>
+                    </HStack>
+                  </VStack>
+                </Modal.Body>
+              </Modal.Content>
+            </Modal>
+
+            {
+              isEmptyComponent ? // if cheeckout is done the component will be empty
+              <View style={{justifyContent:"center", marginTop:"5%", alignItems:"center"}}>
+                <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold'}}>No course or assessment to buy now! Kindly go back and retry.</Text>
+              </View>
+              :
+              <>
+                <CartCard props={course} />
+                
+                {/* Country dropdown */}
+                <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Billing Address</Text>
+    
+                <View style={{marginTop:10, marginBottom:5}}>
+                {
+                    countries !== null ?
+                    <Dropdown
+                        style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        inputSearchStyle={styles.inputSearchStyle}
+                        iconStyle={styles.iconStyle}
+                        itemTextStyle={{color:"#364b5b"}}
+                        data={countries}
+                        ref={countryRef}
+                        search
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select country'}
+                        searchPlaceholder="Search..."
+                        value={country}
+                        onFocus={() => setIsFocus(true)}
+                        onBlur={() => setIsFocus(false)}
+                        onChange={item => {
+                            setCountry(item.value);
+                            setRegion(null);
+                            getRegions(item.value)
+                            setCountryError(null)
+                            setIsFocus(false);
+                        }}
+                    />
+                    : <></>
+                }
+                {countryError !== null ? <Text style={{marginLeft:5, color:"red"}}>{countryError}</Text> : <></>}
                 </View>
-                : <></>
+                
+                {/* Region dropdown */}
+    
+                <View style={{marginTop:5, marginBottom:10}}>
+                {
+                    regions !== null ?
+                    <Dropdown
+                        style={[styles.dropdown, isFocus && { borderColor:"#364b5b" }]}
+                        placeholderStyle={styles.placeholderStyle}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        inputSearchStyle={styles.inputSearchStyle}
+                        iconStyle={styles.iconStyle}
+                        itemTextStyle={{color:"#364b5b"}}
+                        data={regions}
+                        ref={regionRef}
+                        search
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select region'}
+                        searchPlaceholder="Search..."
+                        value={region}
+                        onFocus={() => setIsFocus(true)}
+                        onBlur={() => setIsFocus(false)}
+                        onChange={item => {
+                            setRegion(item.value);
+                            setRegionError(null)
+                            setIsFocus(false);
+                        }}
+                    />
+                    : <></>
+                }
+                {regionError !== null ? <Text style={{marginLeft:5, color:"red"}}>{regionError}</Text> : <></>}
+                </View>
+                
+                {/* Address bar 1 */}
+    
+                <View>
+                    <Input 
+                        placeholder="Address line 1"
+                        ref={address1Ref}
+                        onChangeText={(text)=>{
+                          setAddress1Err(false)
+                          console.log(text.trim())
+                          setAddress1(text.trim())
+                        }}
+                        />
+                </View>
+                {address1Err ? <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold', color:"red"}}>Please fill the address line-1</Text> : null}
+                
+                {/* Address bar 2 */}
+    
+                <View style={{marginVertical:10}}>
+                    <Input 
+                        placeholder="Address line 2"
+                        ref={address2Ref}
+                        onChangeText={(text)=>{
+                          setAddress2Err(false)
+                          console.log(text)
+                          setAddress2(text.trim())
+                        }}
+                    />
+                </View>
+                {address2Err ? <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold', color:"red"}}>Please fill the address line-2</Text> : null}
+                
+                {/* Apply coupon code */}
+                
+                {
+                  Object.keys(couponList).length > 0 ?
+                  <FormControl mb={5}>
+                    <FormControl.Label _text={{ fontSize: 13, color: 'greyScale.800', fontWeight: 'bold', }} mb={1}>
+                      Have Promo Code ?
+                    </FormControl.Label>
+                    <HStack space={1}>
+                      <Dropdown
+                          style={[styles.dropdown2, isFocus && { borderColor:"#364b5b" }]}
+                          placeholderStyle={styles.placeholderStyle}
+                          selectedTextStyle={styles.selectedTextStyle}
+                          inputSearchStyle={styles.inputSearchStyle}
+                          iconStyle={styles.iconStyle}
+                          itemTextStyle={{color:"#364b5b"}}
+                          data={couponList}
+                          // ref={countryRef}
+                          search
+                          maxHeight={300}
+                          labelField="label"
+                          valueField="value"
+                          placeholder={'Select coupon'}
+                          searchPlaceholder="Search..."
+                          value={coupon}
+                          onFocus={() => setIsFocus(true)}
+                          onBlur={() => setIsFocus(false)}
+                          onChange={item => {
+                              setCoupon(item.value)
+                              // setRegion(null);
+                              // getRegions(item.value)
+                              // setCountryError(null)
+                              setIsFocus(false);
+                          }}
+                      />
+                      <Button onPress={applyPromoCode} px={5}>Apply</Button>
+                    </HStack>
+                  </FormControl>
+                  : null
+                }
+                
+                {/* Checkout info */}
+    
+                {checkOutData !== null ? 
+                    <View style={{width:width*0.9, alignSelf:"center"}}>
+                        <Text style={{fontSize: 17, color:'#000', marginTop:10, fontWeight: 'bold',}}>Order Summary</Text>
+                        <HStack justifyContent="space-between">
+                            <Text
+                                color={'greyScale.800'}
+                                style={{fontSize: 13, fontWeight: 'bold'}}>
+                                Sub Total
+                            </Text>
+                            <Text
+                                color={'primary.100'}
+                                style={{fontSize: 13, fontWeight: 'bold'}}>
+                                {checkOutData.currencyCode} {checkOutData.subTotal}
+                            </Text>
+                            </HStack>
+                            <HStack justifyContent="space-between">
+                            <Text
+                                color={'greyScale.800'}
+                                style={{fontSize: 13, fontWeight: 'bold'}}>
+                                Discount ({checkOutData.discountPercentage ? checkOutData.discountPercentage : '0'}%)
+                            </Text>
+                            <Text
+                                color={'primary.100'}
+                                style={{fontSize: 13, fontWeight: 'bold'}}>
+                                {checkOutData.currencyCode  === 'USD' ? '$' : '₹'} {checkOutData.discountValue ? checkOutData.discountValue : 0}
+                            </Text>
+                            </HStack>
+                            <HStack justifyContent="space-between">
+                            <Text
+                                color={'greyScale.800'}
+                                style={{fontSize: 13, fontWeight: 'bold'}}>
+                                Vat ({checkOutData.taxPercentage}%)
+                            </Text>
+                            {
+                              checkOutData.taxValue ?
+                              <Text
+                                  color={'primary.100'}
+                                  style={{fontSize: 13, fontWeight: 'bold'}}>
+                                  {checkOutData.currencyCode  === 'USD' ? '$' : '₹'} {Number.isInteger(checkOutData.taxValue) ? checkOutData.taxValue : checkOutData.taxValue.toFixed(2)}
+                              </Text>
+                              : 
+                              <Text
+                                  color={'primary.100'}
+                                  style={{fontSize: 13, fontWeight: 'bold'}}>0</Text>
+                            }
+                            </HStack>
+    
+                            <HStack justifyContent="space-between" mt={8}>
+                            <VStack>
+                                <Text
+                                color={'greyScale.800'}
+                                style={{fontSize: 12, fontWeight: 'bold'}}>
+                                Total
+                                </Text>
+                                <Text
+                                color={'primary.100'}
+                                style={{fontSize: 16, fontWeight: 'bold'}}>
+                                {checkOutData.currencyCode} {checkOutData.total}
+                                </Text>
+                            </VStack>
+                            <Button colorScheme={'primary'} onPress={()=> CheckoutServer()}>Checkout</Button>
+                            </HStack>
+                    </View>
+                    : <></>
+                }
+              </>
             }
+
         </View>
     )
 }
@@ -584,6 +701,15 @@ const styles = StyleSheet.create({
       minWidth: width / 1.7,
     },
     dropdown: {
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 0.5,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        color:"#364b5b"
+      },
+    dropdown2: {
+        width:width*0.75,
         height: 40,
         borderColor: 'gray',
         borderWidth: 0.5,

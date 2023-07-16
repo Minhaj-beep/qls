@@ -9,6 +9,10 @@ const initialState = {
   ProfileData: '',
   ProfileImg: false,
   NotificationCount: null,
+  IsLoggedInBefore: false,
+  User_ID: '', 
+  TempName: '',
+  IsLoggedInWithMobile: false,
 };
 
 export const authSlice = createSlice({
@@ -39,6 +43,18 @@ export const authSlice = createSlice({
     setNotificationCount: (state, action) => {
       state.NotificationCount = action.payload;
     },
+    setIsLoggedInBefore: (state, action) => {
+      state.IsLoggedInBefore = action.payload;
+    },
+    setUser_ID: (state, action) => {
+      state.User_ID = action.payload;
+    },
+    setTempName: (state, action) => {
+      state.TempName = action.payload;
+    },
+    setIsLoggedInWithMobile: (state, action) => {
+      state.IsLoggedInWithMobile = action.payload;
+    },
   },
 });
 
@@ -54,5 +70,9 @@ export const {
   setGUser,
   setLoading,
   setNotificationCount,
+  setIsLoggedInBefore,
+  setUser_ID,
+  setTempName,
+  setIsLoggedInWithMobile
 } = authSlice.actions;
 export default authSlice.reducer;

@@ -23,7 +23,7 @@ const ProfileSettings = props => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('Tabs', {screen: 'Courses'})}>
+        onPress={() => navigation.navigate('MyCourses')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>My courses</Text>
           <IconButton
@@ -35,7 +35,7 @@ const ProfileSettings = props => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('Tabs', {screen: 'Home'})}>
+        onPress={() => navigation.navigate('MyAssessments')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>My Assessments</Text>
           <IconButton
@@ -47,7 +47,7 @@ const ProfileSettings = props => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => navigation.navigate('Tabs', {screen: 'Home'})}>
+        onPress={() => navigation.navigate('MyMessages')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Messages</Text>
           <IconButton

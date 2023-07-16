@@ -23,7 +23,7 @@ const Purchaged = ({props}) => {
                 const currency = data.currency === 'INR' ? '₹' : '$';
                 return (
                     <TouchableOpacity onPress={()=>{viewAssessment(data.assessmentCode)}} key={index}>
-                        <HStack style={styles.CourseCard} space={4} mt={2}>
+                        <HStack alignItems={'center'} style={styles.CourseCard} space={4} mt={2}>
                             <Center>
                                 <Ionicons name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={30} />
                             </Center>

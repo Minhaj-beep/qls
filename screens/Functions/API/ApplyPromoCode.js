@@ -15,7 +15,7 @@ const ApplyPromoCode = async (email, code) => {
     }),
   };
   const response = await fetch(
-    BaseURL + '/v1/courseDiscount/applyPromoCode',
+    BaseURL + 'v1/courseDiscount/applyPromoCode',
     requestOptions,
   )
   return response.json();

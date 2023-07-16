@@ -1,6 +1,7 @@
 import {BaseURL} from '../../StaticData/Variables';
 
-const CheckoutNowPost = async (email, courseCode) => {
+const CheckoutNowPost = async (email, courseCode, coupon) => {
+  console.log('helooooooooooooooooo', coupon)
   const requestOptions = {
     method: 'POST',
     // headers:{
@@ -14,10 +15,13 @@ const CheckoutNowPost = async (email, courseCode) => {
       gmailUserType: 'STUDENT',
       token: email,
     },
-    body: JSON.stringify({ courseCode: courseCode })
+    body: JSON.stringify({ 
+      courseCode: courseCode,
+      couponName: coupon
+    })
   };
   const response = await fetch(
-    BaseURL + `/api/v1/payment/checkout-now`,
+    BaseURL + `api/v1/payment/checkout-now`,
     requestOptions,
   )
   // .then(res=>console.log(res.status))

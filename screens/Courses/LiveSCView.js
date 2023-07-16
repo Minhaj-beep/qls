@@ -642,14 +642,14 @@ import {
                     <Image source={require('../../assets/courses.png')} alt="courses" size={8}/>
                     <Text color={'#000'} fontSize={14}>Total Courses</Text>
                   </HStack>
-                  { courses ? <Text color={'#000'} fontSize={14}>{courses[0].totalCourses}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
+                  { courses ? <Text color={'#000'} fontSize={14}>{courses.totalCourses > 0 ? courses.totalCourses : 0}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
                 </HStack>
                 <HStack justifyContent={'space-between'} alignItems={'center'}>
                   <HStack space={3} alignItems={'center'}>
                     <Image source={require('../../assets/graduate.png')} alt="courses" size={7}/>
                     <Text color={'#000'} fontSize={14}>Total Learners</Text>
                   </HStack>
-                  {courses ? <Text color={'#000'} fontSize={14}>{courses[0].learnersCount > 0 ? courses[0].learnersCount : 0}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
+                  {courses ? <Text color={'#000'} fontSize={14}>{courses.learnersCount > 0 ? courses.learnersCount : 0}</Text> : <Text color={'#000'} fontSize={14}>0</Text>}
                 </HStack>
                 <Button mt={2} bg={'secondary.50'} _text={{ color:'#364b5b', fontSize:14, fontWeight:'bold' }} _pressed={{backgroundColor:'#F0E1EB', opacity:'0.5' }} onPress={()=> navigation.navigate('InstructorProfile')}>
                     View Profile

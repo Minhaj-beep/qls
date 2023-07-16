@@ -1,6 +1,7 @@
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {HStack, VStack, Image, Center, Text} from 'native-base';
+import { AirbnbRating } from 'react-native-ratings';
 
 const {width, height} = Dimensions.get('window');
 const RcCard = ({props}) => {
@@ -9,9 +10,9 @@ const RcCard = ({props}) => {
   //   const navigation = props.navigation;
   var cName = props.courseName;
   // const courseT = cName.slice(0, 25);
-  // console.log(cName)
+  // console.log(props)
   const currency = props.currency === 'INR' ? '₹' : '$';
-  console.log(props.currency)
+  // console.log(props.currency)
   // let RCount = props.rating;
   // console.log(props)
 
@@ -26,7 +27,7 @@ const RcCard = ({props}) => {
 
   // console.log(props);
   return (
-    <HStack style={styles.CourseCard} space={4} mt={2}>
+    <HStack style={styles.CourseCard} space={4} mb={2}>
       <Center>
         <Image
           style={styles.cardImg}
@@ -50,8 +51,32 @@ const RcCard = ({props}) => {
           </Text>
         </HStack>
 
+        <HStack>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', color:"#8C8C8C", marginRight:2, maxWidth: width / 4, }} >
+            By
+          </Text>
+          <Text noOfLines={1}
+            style={{ fontSize: 10, fontWeight: 'bold', color:"#364b5b", maxWidth: width*0.8, }}
+            color={'primary.100'}>
+            {props.instructorName}
+          </Text>
+        </HStack>
+
         <HStack space={2} width={width *0.5} alignItems={'center'}>
           <HStack space={1}>
+          <AirbnbRating
+              count={5}
+              isDisabled={true}
+              showRating={false}
+              defaultRating={`${props.rating}`}
+              size={10}
+              // selectedColor={colors[2]}
+              value={`${props.rating}`}
+              // style={{marginHorizontal:4}}
+              // ratingContainerStyle={{ marginHorizontal:10, marginTop:20, }}
+              // starContainerStyle={{paddingVertical:10,}}     
+              // onFinishRating={ratingCompleted}
+            />
             {/* {
                     [...Array(RCount)].map((e, i) =>{
                         return (
@@ -71,12 +96,13 @@ const RcCard = ({props}) => {
                     size="3"
                     /> */}
           </HStack>
-
-          <Text
-            style={{fontSize: 10, fontWeight: '600'}}
-            color={'greyScale.800'}>
-            {props.rating} ({props.ratingCount})
-          </Text>
+          
+          {
+            props.hasOwnProperty('rating') ?
+            <Text style={{fontSize: 10, fontWeight: '600'}} color={'greyScale.800'}>{props.rating === parseInt(props.rating) ? props.rating : props.rating.toFixed(1)} ({props.ratingCount})</Text>
+            :
+            <Text style={{fontSize: 10, fontWeight: '600'}} color={'greyScale.800'}>{0} ({0})</Text>
+          }
 
           <HStack space={1} alignItems={'center'}>
             <Image

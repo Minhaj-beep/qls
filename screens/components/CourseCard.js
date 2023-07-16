@@ -31,6 +31,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {BaseURL} from '../StaticData/Variables';
 import {setLoading} from '../Redux/Features/authSlice';
 import {setSCData} from '../Redux/Features/CourseSlice';
+import { Rating, AirbnbRating } from 'react-native-ratings'
 
 // export const SLIDER_WIDTH = width;
 // export const ITEM_WIDTH = width - 150;
@@ -59,6 +60,8 @@ const CourseCard = gestureHandlerRootHOC(items => {
   //   console.log(item)
   // }
 
+  // console.log('item: ', item)
+
   return (
     <View style={styles.coursecard} alignItems="center">
       <VStack space={1} p={2}>
@@ -77,7 +80,7 @@ const CourseCard = gestureHandlerRootHOC(items => {
         </HStack>
 
         <HStack space={2} style={{alignItems: 'center'}}>
-          { RatingCount ?
+          {/* { RatingCount ?
           <HStack space={1}>
               <HStack space={1}>
                 {
@@ -136,24 +139,32 @@ const CourseCard = gestureHandlerRootHOC(items => {
                 size="3"
               />
             </HStack>
+          } */}
+          <AirbnbRating
+              count={5}
+              isDisabled={true}
+              showRating={false}
+              defaultRating={`${item.rating}`}
+              size={10}
+              // selectedColor={colors[2]}
+              value={`${item.rating}`}
+              // style={{marginHorizontal:4}}
+              // ratingContainerStyle={{ marginHorizontal:10, marginTop:20, }}
+              // starContainerStyle={{paddingVertical:10,}}     
+              // onFinishRating={ratingCompleted}
+            />
+
+          {
+            item.rating ?
+            <Text style={{fontSize: 11}}>{parseInt(item.rating) === item.rating ? item.rating : item.rating.toFixed(1)} ({item.ratingCount})</Text>
+            : <Text style={{fontSize: 11}}>0 (0)</Text>
           }
 
-          <Text style={{fontSize: 11}}>
-            {item.rating}({item.ratingCount})
-          </Text>
-
-          {/* <HStack space={1} alignItems='center'>
-                 <Image
-                 alt="graduate icon"
-                 source={require('../../assets/Home/graduate_student.png')}
-                 size="3"
-                 />
-                 <Text style={{fontSize: 11}}>
-                     85 Learners
-                 </Text>
-             </HStack> */}
+          <HStack space={1} ml={1} alignItems='center'>
+            <Image alt="graduate icon" source={require('../../assets/Home/graduate_student.png')} size="3"/>
+            <Text style={{fontSize: 11}}>{item.learnersCount} Learners</Text>
+          </HStack>
         </HStack>
-        {/* <HStack justifyContent={'space-between'} alignItems={'center'}> */}
         <HStack style={{justifyContent:"space-between"}}>
           <Text style={{fontSize: 15, color: '#000000', fontWeight: 'bold'}}>
             {currency}{item.fee}
@@ -165,11 +176,7 @@ const CourseCard = gestureHandlerRootHOC(items => {
             <></>
           }
         </HStack>
-        {/* <IconButton
-            icon={<MIcon name="cart-plus" size={20} color={'#395061'} />}
-            onPress={() => AddToCart(item.courseCode)}
-          />
-        </HStack> */}
+        {/* <IconButton icon={<MIcon name="cart-plus" size={20} color={'#395061'} />} onPress={() => AddToCart(item.courseCode)}/> */}
       </VStack>
     </View>
   );

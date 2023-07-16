@@ -41,8 +41,8 @@ const NotificationsManagement = ({navigation}) => {
 
   const GetNData = () =>{
     dispatch(setLoading(true))
-    const API = BaseURL+'/v1/notifications/getNotificationMainData'
-    // const API = 'https://api.dev.qlearning.academy/v1/notifications/getNotifications'
+    const API = BaseURL+'v1/notifications/getNotificationMainData'
+    // const API = 'https://api-uat.qlearning.academy/v1/notifications/getNotifications'
     var requestOptions = {
       method:'GET',
       headers:{
@@ -132,7 +132,7 @@ const NotificationsManagement = ({navigation}) => {
     dispatch(setLoading(true))
     const API = BaseURL+'v1/notifications/updateNotificationMainData'
     console.log('Updating')
-    // const API = 'https://api.dev.qlearning.academy/v1/notifications/getNotifications'
+    // const API = 'https://api-uat.qlearning.academy/v1/notifications/getNotifications'
     
     let Notify = !data.isNotify
     let NCode = data.notificationCode

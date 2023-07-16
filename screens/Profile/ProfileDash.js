@@ -22,7 +22,7 @@ import DashImg from '../components/Profile/DashImg';
 import ProfileSettings from '../components/Profile/ProfileSettings';
 import {useSelector, useDispatch} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {setLoading, setLoggedIn} from '../Redux/Features/authSlice';
+import {setLoading, setLoggedIn, setGUser, setIsLoggedInBefore} from '../Redux/Features/authSlice';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import { BaseURL } from '../StaticData/Variables';
@@ -70,6 +70,7 @@ const ProfileDash = ({navigation}) => {
   const ClearLocalStorage = async () => {
     try {
       await AsyncStorage.clear();
+      await AsyncStorage.setItem('isLoggedInBefore', 'true')
     } catch (e) {
       alert('Local storage error: ' + e);
     }
@@ -96,7 +97,9 @@ const ProfileDash = ({navigation}) => {
 
   const LogOut = () => {
     dispatch(setLoading(true));
+    dispatch(setGUser(false));
     dispatch(setLoggedIn(false));
+    dispatch(setIsLoggedInBefore(true));
     logOutFromCurrentDevice()
     ClearLocalStorage();
     GSignOut();

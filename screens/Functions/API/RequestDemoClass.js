@@ -10,6 +10,7 @@ const RequestDemoClass = async (email, courseCode) => {
       'Content-Type': 'application/json',
       gmailUserType: 'INSTRUCTOR',
       token: email,
+      // 'x-auth-token':JWT,
     },
     body: JSON.stringify({
         courseCode: courseCode,

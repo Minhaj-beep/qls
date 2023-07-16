@@ -11,7 +11,7 @@ const GetDiscountCodesForCartItems = async (email) => {
     },
   };
   const response = await fetch(
-    BaseURL + `/v1/courseDiscount/getDiscountCodesForCartItems`,
+    BaseURL + `v1/courseDiscount/getDiscountCodesForCartItems`,
     requestOptions,
   );
   return response.json();

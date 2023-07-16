@@ -15,7 +15,8 @@ const initialState = {
   BuyNowCourse: {},
   ViewIndependentAssessmentCode: '',
   IsRetryIndependentAssessment: false,
-  JoinDemoClassData: {}
+  JoinDemoClassData: {},
+  LiveObjForToday: {}
 };
 
 export const courseSlice = createSlice({
@@ -67,6 +68,9 @@ export const courseSlice = createSlice({
     setJoinDemoClassData: (state, action) => {
       state.JoinDemoClassData = action.payload;
     },
+    setLiveObjForToday: (state, action) => {
+      state.LiveObjForToday = action.payload;
+    },
   },
 });
 
@@ -86,5 +90,6 @@ export const {
   setViewIndependentAssessmentCode,
   setIsRetryIndependentAssessment,
   setJoinDemoClassData,
+  setLiveObjForToday
 } = courseSlice.actions;
 export default courseSlice.reducer;

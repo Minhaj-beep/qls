@@ -26,6 +26,14 @@ import ViewAssessment from '../IndependentAssessment/ViewAssessment';
 import NotificationsManagement from '../components/Profile/NotificationManagement';
 import ProfileNotification from '../Profile/ProfileNotification';
 import JoinDemoClass from '../Courses/JoinDemoClass';
+import MyCourses from '../MyCourses/MyCourses';
+import SeeAll from '../components/SeeAll';
+import ViewLiveCourse from '../Courses/ViewLiveCourse';
+import ViewCategory from '../Categories/ViewCategories';
+import MyMessages from '../MyMessages/MyMessages';
+import { useEffect } from 'react';
+import { setIsLoggedInBefore } from '../Redux/Features/authSlice'
+import { useSelector, useDispatch } from 'react-redux';
 
 const Stack = createNativeStackNavigator();
 
@@ -169,46 +177,74 @@ const AuthenticatedStack = () => {
        options={{headerShown: false}}
        screenOptionStyle={screenOptionStyle}
       />
+      <Stack.Screen
+       name="MyCourses"
+       component={MyCourses}
+       options={{headerShown: false}}
+       screenOptionStyle={screenOptionStyle}
+      />
+      <Stack.Screen
+       name="SeeAll"
+       component={SeeAll}
+       options={{headerShown: false}}
+       screenOptionStyle={screenOptionStyle}
+      />
+      <Stack.Screen
+       name="ViewLiveCourse"
+       component={ViewLiveCourse}
+       options={{headerShown: false}}
+       screenOptionStyle={screenOptionStyle}
+      />
+      <Stack.Screen
+       name="ViewCategory"
+       component={ViewCategory}
+       options={{headerShown: false}}
+       screenOptionStyle={screenOptionStyle}
+      />
+      <Stack.Screen
+       name="MyMessages"
+       component={MyMessages}
+       options={{headerShown: false}}
+       screenOptionStyle={screenOptionStyle}
+      />
     </Stack.Navigator>
   );
 };
 
 const OnBoardingStack = () => {
-  const [isLoggenIn, setIsLoggedIn] = useState(null)
-  const getLoggedIn = async () => {
-    try{
-      let v = await  AsyncStorage.getItem('isLoggedInBefore')
-      if(v !== null){
-        // console.log(v)
-        setIsLoggedIn(v)
-        console.log('===========================AsyncStorage.setItem==================', v)
-      } else {
-        setIsLoggedIn('false')
-        console.log('===========================AsyncStorage.setItem==================', v)
-      }
-    } catch (e){
-      console.log('===========================Error==================', e)
-    }
-  }
-  getLoggedIn()
+  const isLoggedinBefore = useSelector(state => state.Auth.IsLoggedInBefore);
+
   return (
     <>
       {
-        isLoggenIn !== null ?
-        <Stack.Navigator initialRouteName={isLoggenIn !== 'true' ? "CreateAccount" : "Login"}>
-          <Stack.Screen
-            name="Login"
-            component={Login}
-            options={{headerShown: false}}
-          />
-          <Stack.Screen
-            name="CreateAccount"
-            component={CreateAccount}
-            options={{headerShown: false}}
-            screenOptionStyle={screenOptionStyle}
-          />
-        </Stack.Navigator>
-        : <></>
+          !isLoggedinBefore ?
+          <Stack.Navigator initialRouteName={"CreateAccount"}>
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateAccount"
+              component={CreateAccount}
+              options={{headerShown: false}}
+              screenOptionStyle={screenOptionStyle}
+            />
+          </Stack.Navigator>
+          : 
+          <Stack.Navigator initialRouteName={"Login"}>
+            <Stack.Screen
+              name="Login"
+              component={Login}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateAccount"
+              component={CreateAccount}
+              options={{headerShown: false}}
+              screenOptionStyle={screenOptionStyle}
+            />
+          </Stack.Navigator>
       }
     </>
   );

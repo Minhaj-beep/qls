@@ -43,7 +43,16 @@ const Assessments = ({navigation}) => {
 
   const Submit = async() => {
     dispatch(setLoading(true));
+    console.log(AnswerMap, 'This is the data')
     if ( AnswerMap.size > 0 ) {
+      let arr1 = []
+      AssessmentD.map((data, index)=>{
+        let ans = {
+          'assessmentOrder':index+1,
+          'answer':'',
+        };
+        arr1.push(ans)
+      })
       const Answers = [];
       AnswerMap.forEach((data, index)=>{
         let ans = {
@@ -52,10 +61,18 @@ const Assessments = ({navigation}) => {
         };
         Answers.push(ans);
       });
+      Answers.forEach((elem2) => {
+        let index = arr1.findIndex((elem1) => elem1.assessmentOrder === elem2.assessmentOrder);
+        if (index !== -1) {
+          arr1.splice(index, 1, elem2);
+        }
+      })
+      console.log('Array 111111111: ', arr1)
+      console.log('Array 22222222: ', Answers)
       let body = {
         'chapterOrder': AData.chapterOrder,
         'lessonOrder':AssessmentData.lessonOrder,
-        'answers':Answers,
+        'answers':arr1,
       };
       try {
         let response = await AttendAssessment(email, CourseData.courseCode, body);
@@ -74,11 +91,12 @@ const Assessments = ({navigation}) => {
             dispatch(setLoading(false));
           }
         } else {
-          alert("Submit error: " + response.message);
+          alert("Submit error: 1" + response.message);
           dispatch(setLoading(false));
         }
       } catch (e) {
-        alert("Submit error: " + e.message);
+        // alert("Submit error 2: " + e.message);
+        Submit()
         dispatch(setLoading(false));
       }
     } else {
@@ -116,6 +134,7 @@ const Assessments = ({navigation}) => {
       let response = await AssessmentTryAgain(email, CourseData.courseCode, body);
       if ( response.status === 200){
         alert('Now you can try again!');
+        setAssessmentD(AssessmentData.assessmentDetails)
         dispatch(setLoading(false));
       } else {
         alert("TryAssessmentAgain error : " + response.message);
@@ -131,30 +150,30 @@ const Assessments = ({navigation}) => {
     let Choice = props.assessmentChoice;
     return (
       <VStack space={2}>
-          <Text style={{fontSize: 15,color: '#000000',fontWeight: 'bold',maxWidth:width / 1}}>
-            {props.assessmentOrder}. {' '} {props.assessmentQuestion}
-          </Text>
-      <HStack space={6} m={2} justifyContent="space-between">
-        <View>
-          <Radio.Group size="sm" name="Radio01" colorScheme={'primary'} onChange={(value)=>{
-            AnswerMap.set(props.assessmentOrder ,Choice[value]);
-           }}>
-           {
-            Choice.map((data, index)=> {
-              return (
-                <Radio value={index} my={1} key={index} size="sm">
-                  {data}
-                </Radio>
-              );
-            })
-            }
-          </Radio.Group>
-        </View>
-        <View>
-          <Text style={{fontSize:13,borderRadius:5,fontWeight:'bold'}} color={'primary.100'}>{props.point} Points</Text>
-        </View>
-      </HStack>
-    </VStack>
+        <Text style={{fontSize: 15,color: '#000000',fontWeight: 'bold',maxWidth:width / 1}}>
+          {props.assessmentOrder}. {' '} {props.assessmentQuestion}
+        </Text>
+        <HStack space={6} m={2} justifyContent="space-between">
+          <View style={{maxWidth:width / 1}}>
+            <Radio.Group size="sm" name="Radio01" colorScheme={'primary'} onChange={(value)=>{
+              AnswerMap.set(props.assessmentOrder ,Choice[value]);
+            }}>
+            {
+              Choice.map((data, index)=> {
+                return (
+                  <Radio value={index} my={1} key={index} size="sm">
+                    <Text maxWidth={width*0.68}>{data}</Text>
+                  </Radio>
+                );
+              })
+              }
+            </Radio.Group>
+          </View>
+          <View>
+            <Text style={{fontSize:13,borderRadius:5,fontWeight:'bold'}} color={'primary.100'}>{props.point} Points</Text>
+          </View>
+        </HStack>
+      </VStack>
     );
   };
 
@@ -192,8 +211,8 @@ const Assessments = ({navigation}) => {
            {
             Choice.map((data, index)=> {
               return (
-                <Radio value={index} my={1} key={index} size="sm" >
-                  {data}
+                <Radio alignItems={'flex-start'} value={index} my={1} key={index} size="sm" >
+                  <Text maxWidth={width*0.68}>{data}</Text>
                 </Radio>
               );
             })
@@ -221,7 +240,7 @@ const Assessments = ({navigation}) => {
   const RenderAssessment = () => {
     return AssessmentD.map((data,index) =>{
       return (
-        <VStack key={index} mt={1}>
+        <VStack key={index} mt={5}>
          {SResult ? <RenderRR props={data}/> : <RenderR props={data}/>}
         </VStack>
       );
@@ -285,7 +304,7 @@ const Assessments = ({navigation}) => {
          <VStack p={4}>
           {/* {console.log(AssessmentD, 'Assessment D')} */}
           {AssessmentD ?
-            <VStack mt={3} style={{marginBottom:150}}>
+            <VStack mt={2} style={{marginBottom:150}}>
               <Text style={{fontSize: 17,color: '#000000',fontWeight: 'bold',maxWidth:width / 1}}>
               {AssessmentData.lessonName}
               </Text>

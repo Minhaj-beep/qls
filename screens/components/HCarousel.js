@@ -170,12 +170,7 @@ const HCarousel = ({props}) => {
   return (
     <View>
       <View>
-        <HStack
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-          ml={4}
-          mr={4}>
+        <HStack justifyContent="space-between" alignItems="center" mb={3} ml={4} mr={4}>
           <Text style={{color: '#000000', fontSize: 16, fontWeight: 'bold'}}>
             {props}
           </Text>

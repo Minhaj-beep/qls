@@ -11,7 +11,15 @@ const { width, height } = Dimensions.get('window')
 const JoinDemoClass = ({navigation}) => {
   const [endClass, setEndClass] = useState(null)
   const JoinDemoClassData = useSelector(state => state.Course.JoinDemoClassData);
+  console.log(JoinDemoClassData, 'JoinDemoClassData')
+  // console.log(JoinDemoClassData.studentLink.split('?'), 'data')
+  const newToken = 'token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb3Vyc2VDb2RlIjoiMzk1MjJlMDAtMDJjOC00NTU4LThjMDYtNjc2MjRjNjRhYTdlIiwic3R1ZGVudEVtYWlsIjpudWxsLCJzdHVkZW50TmFtZSI6bnVsbCwiZGVtb0RhdGUiOiIyMDIzLTA0LTA2VDAwOjAwOjAwLjAwMFoiLCJkZW1vVGltZSI6IjEyOjMxIiwiZGVtb0NvZGUiOiI2NDJlNmRmZTVjNzdkOWZmODc4NTJiOGQiLCJ0b3BpY05hbWUiOiJUZXh0IG9uIDIwLzAyLzIzIiwidXNlclR5cGUiOiJTVFVERU5UIiwiaWF0IjoxNjgwNzY2MzAwfQ.ROrTgCNuKarFqeaMdCQA8uiWaquPE3OkJztWUoa_5jQ'
   const [url, setUrl] = useState(null)
+
+  const appToken = 'token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb3Vyc2VDb2RlIjoiMzk1MjJlMDAtMDJjOC00NTU4LThjMDYtNjc2MjRjNjRhYTdlIiwiaW5zdHJ1Y3RvckVtYWlsIjoiamlib3JhbTMwOUBuZXZ5eHVzLmNvbSIsImluc3RydWN0b3JJZCI6IjYzYzhkYzEwMjQ3Zjk2ZGJhOTAyMzc5ZCIsImluc3RydWN0b3JOYW1lIjoiSmlibyAgUmFtIiwiZGVtb0RhdGUiOiIyMDIzLTA0LTA2VDAwOjAwOjAwLjAwMFoiLCJkZW1vVGltZSI6IjEyOjMxIiwiZGVtb0NvZGUiOiI2NDJlNmRmZTVjNzdkOWZmODc4NTJiOGQiLCJ0b3BpY05hbWUiOiJUZXh0IG9uIDIwLzAyLzIzIiwidXNlclR5cGUiOiJJTlNUUlVDVE9SIiwiaWF0IjoxNjgwNzY2MjgxfQ.0NAZDVDIV5FGGSRD0kfrwTDQ0PGYp2mr3S1hP_kPg2Y'
+  if(appToken === newToken){
+    console.log('Mathed !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+  }
 
   useEffect(()=>{
     if(endClass !== null){
@@ -20,13 +28,15 @@ const JoinDemoClass = ({navigation}) => {
   },[endClass])
 
   useEffect(()=>{
-    var token = JoinDemoClassData.studentLink.split('?')
-    var id = JoinDemoClassData._id
-    setUrl(`https://dev.qlearning.academy/live-demo-class/${id}?${token[1]}`)
-    console.log(id, 'and ', token[1], 'and the entire link ', JoinDemoClassData.studentLink)
-    console.log(`{
-        https://dev.qlearning.academy/live-demo-class/${id}?${token[1]}
-    }`)
+    var token = JoinDemoClassData.studentLink.length > 0 ? JoinDemoClassData.studentLink.split('?') : null
+    if(token !== null){
+      var id = JoinDemoClassData._id
+      setUrl(`https://uat.qlearning.academy/demo-class-room-app/${JoinDemoClassData.demoCode}?${token[1]}`)
+      console.log(id, 'and ', token[1], 'and the entire link ', JoinDemoClassData.studentLink)
+      console.log(`{
+          https://uat.qlearning.academy/demo-class-room-app/${JoinDemoClassData.demoCode}?${token[1]}
+      }`)
+    }
   }, [])
 
   const AppBarContent = {

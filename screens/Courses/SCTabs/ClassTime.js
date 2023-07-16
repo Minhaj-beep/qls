@@ -1,7 +1,7 @@
-import {StyleSheet, View, Linking, Dimensions} from 'react-native';
+import {StyleSheet, Linking, Dimensions} from 'react-native';
 import React,{useEffect,useState} from 'react';
 import {useSelector,useDispatch} from 'react-redux';
-import {HStack, VStack,Text,Center} from 'native-base';
+import {HStack, VStack,Text, View} from 'native-base';
 import RenderHtml from 'react-native-render-html';
 import { GetLiveCourseFull } from '../../Functions/API/GetLiveCourseFull';
 import {setLoading} from '../../Redux/Features/authSlice';
@@ -26,6 +26,10 @@ const Overview = () => {
         console.log('Class time tab');
     }
   },[CourseData,email,CourseFull]);
+
+  function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 
   const GetClassTime = async (mail, code) => {
     try {
@@ -60,7 +64,7 @@ const Overview = () => {
            { LiveFull ?
             <View>
             { LiveFull.courseDuration ? <View>
-                    <Text ml={4} color={'primary.100'} fontSize={12} fontWeight={'bold'}>{LiveFull.fromTime}  to  {LiveFull.toTime} ({LiveFull.courseDuration})</Text>
+                    <Text ml={4} color={'primary.900'} fontSize={12} fontWeight={'bold'}>{LiveFull.fromTime}  to  {LiveFull.toTime} ({LiveFull.courseDuration})</Text>
                 </View> :
                 <Text ml={4} color={'greyScale.800'} fontSize={10}>Yet to add Class Duration</Text>
                 }
@@ -70,7 +74,7 @@ const Overview = () => {
 
             <Text mt={3} color={'greyScale.800'} fontSize={12} fontWeight={'bold'}>Class Time</Text>
                { ClassT ?
-                <View>
+                <View backgroundColor={'gray.200'} padding={1} borderRadius={'md'}>
                     { ClassT.length > 0 ?
                         <VStack space={1}>
                         {
@@ -80,9 +84,9 @@ const Overview = () => {
                             return (
                                 <View key={index}>
                                    { data.startTime !== '' ?
-                                    <HStack justifyContent={'space-between'} maxW={width / 1.5} ml={4} space={10}>
-                                        <Text  color={'greyScale.800'} fontSize={14} fontWeight={'bold'} mt={1}>{data.day}</Text>
-                                        <Text  color={'primary.100'} fontSize={14} fontWeight={'bold'} mt={1}>{startS} to {startE} </Text>
+                                    <HStack justifyContent={'space-between'} marginX={2} space={10}>
+                                        <Text  color={'greyScale.800'} fontSize={14} fontWeight={'bold'} mt={1}>{capitalizeFirstLetter(data.day)}</Text>
+                                        <Text  color={'primary.900'} fontSize={14} fontWeight={'bold'} mt={1}>{startS} to {startE} </Text>
                                     </HStack> : null}
                                 </View>
                             );

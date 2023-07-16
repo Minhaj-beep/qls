@@ -78,7 +78,7 @@ const AppBar = ({props}) => {
   };
 
   const GetNotification = () =>{
-    const API = BaseURL+'/v1/notifications/getNotifications'
+    const API = BaseURL+'v1/notifications/getNotifications'
     var requestOptions = {
       method:'GET',
       headers:{

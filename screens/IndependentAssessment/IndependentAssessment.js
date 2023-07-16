@@ -15,6 +15,7 @@ import GetCategories from "../Functions/API/GetCategories";
 import GetSubcategoriesByCategoryCode from "../Functions/API/GetSubCategoriesByCategoryCode";
 import { AddToCartAssessment } from "../Functions/API/AddToCartAssessment";
 import { setBuyNowCourse } from "../Redux/Features/CourseSlice";
+import { GetPurchasedCourses } from "../Functions/API/GetPurchasedCourses";
 
 const {width, height} = Dimensions.get('window')
 
@@ -35,10 +36,12 @@ const IndependentAssessment = () => {
     const [currentCategory, setCurrentCategory] = useState(null)
     const [currentSubCategory, setCurrentSubCategory] = useState(null)
     const [currentAssessmentData, setCurrentAssessmentData] = useState([])
+    const [allPurchagedCourses, setAllPurchagedCourses] = useState([])
     const [pricese, setPriceses] = useState([])
     const [filter, setFilter] = useState(false)
     const [FeeStart, setFeeStart] = useState(0);
     const [FeeEnd, setFeeEnd] = useState(0);
+    const [isLoaded, setIsLoaded] = useState(false)
     const [searchActive, setSearchActive] = useState(false)
     const [R1, setR1] = useState(false);
     const [R2, setR2] = useState(false);
@@ -52,7 +55,14 @@ const IndependentAssessment = () => {
     useEffect(()=>{
         getAllCategories()
         getAllActiveAssessments()
-    },[])
+    },[]) // getting all the categories and all active assessments 
+
+    useEffect(()=>{
+        const unsubscribe = navigation.addListener('focus', () => {
+            getPurchagesItemsCourseCode()
+        });
+        return unsubscribe;
+    },[navigation]) // getting all purchaged assessments when component in focus
 
     useEffect(()=>{
         if(query !== ''){
@@ -129,16 +139,50 @@ const IndependentAssessment = () => {
 
     // get All the active assessments
     const getAllActiveAssessments = async () => {
+        let arr = []
         try {
             let response = await getAllIndependentAssessments(email)
             if (response.status === 200){
-                setAllAssessments(response.data)
-                console.log(response.data)
+                if(Object.keys(response.data).length > 0) {
+                    response.data.map(i => {
+                        if(i.assessmentStatus === "ACTIVE") {
+                            arr = [...arr, i]
+                        }
+                        if(i.assessmentQuestion === 'Get Blessings without Praying') console.log(i, '=======================================')
+                        console.log(i, '=======================================')
+                    })
+                }
+                setAllAssessments(arr)
+                console.log(arr, '++++++++++++++++++++++++++++++++++++++++++++++++++++')
+                setIsLoaded(true)
             } else {
-                console.log('getAllActivatedAssessment', response.message)
+                console.log('getAllActivatedAssessment error 1: ', response.message)
+                getAllActiveAssessments()
             }
         } catch (e) {
-            console.log('getAllActivatedAssessment', e)
+            console.log('getAllActivatedAssessment error 2: ', e)
+            getAllActiveAssessments()
+        }
+    }
+
+    // Get all purchaged assessments course code to filter between purchaged and non purchaged assessments
+    const getPurchagesItemsCourseCode = async() => {
+        try {
+            let response = await GetPurchasedCourses(email)
+            if (response.status === 200){
+                let arr = []
+                response.data.map((i)=>{
+                    if(i.assessmentCode){
+                        arr = [...arr, i.assessmentCode]
+                    }
+                })
+                console.log(arr, 'Purchaged items')
+                setAllPurchagedCourses(arr)
+            } else {
+                console.log('getPurchagesHistory 1', response.message)
+            }
+        } catch (e) {
+            console.log('getPurchagesHistory 2', e)
         }
     }
 
@@ -228,20 +272,20 @@ const IndependentAssessment = () => {
 
     //apply filter 
     const applyFilter = () => {
-        // console.log(categoryCode)
         // console.log(currentSubCategory)
         let subC = null
         allSubCategories.map((i)=>{
-            if(i.subCategoryName !== currentSubCategory){
+            if(i.subCategoryName === currentSubCategory){
                 subC = i.subCategoryCode
+                console.log(categoryCode, currentSubCategory, i.subCategoryName , '>-------------------------------<')
             }
         })
         setFilter(true)
         let arr = []
         allAssessments.map((item, index)=>{
             if(Object.keys(pricese).length < 2){
+                console.log('--------------------------------->', item.category, currentCategory, item.subCategory, currentSubCategory)
                 if(currentSubCategory !== null) {
-                    // console.log(item.category, currentCategory, item.subCategory, currentSubCategory)
                     if(item.catogory === categoryCode && item.subCategory === subC){
                         console.log(item.subCategory)
                         arr = [...arr, item]
@@ -254,6 +298,7 @@ const IndependentAssessment = () => {
             } else {
                 if (item.fee >= FeeStart && item.fee <= FeeEnd) {
                     if(currentSubCategory !== null) {
+                        console.log(item.fee, FeeStart, FeeEnd, categoryCode, 'ITEM===================================')
                         if(item.catogory === categoryCode && item.subCategory === subC){
                             arr = [...arr, item]
                         }
@@ -358,9 +403,13 @@ const IndependentAssessment = () => {
                     </VStack>
                 </Actionsheet.Content>
                 </Actionsheet>
+
                 <HStack justifyContent={'space-between'}>
                     <IconButton icon={<Ionicons name={'filter-outline'} size={15} color="#364b5b" />}
-                    onPress={onOpen}
+                    onPress={() => {
+                        onOpen(true)
+                        setCurrentSubCategory(null)
+                    }}
                     bg={'#FFFF'} mt={2} />
                     <TouchableOpacity onPress={() => {
                         setSelectedCategory(null)
@@ -380,38 +429,45 @@ const IndependentAssessment = () => {
                         // if(data.catogory === selectedCategory){
                             const currency = data.currency === 'INR' ? '₹' : '$';
                             return (
-                                <View onPress={()=>{}} key={index}>
-                                <HStack style={styles.CourseCard} space={4} mt={2}>
-                                    <Center>
-                                        <Ionicons name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={30} />
-                                    </Center>
-                                    <VStack style={styles.CardContent} space={1}>
-                                        <HStack justifyContent="space-between" alignItems="center" space={2}>
-                                            <Text noOfLines={2} style={{ fontSize: 14, fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>{data.assessmentTitle}</Text>
-                                        </HStack>
-                                        <HStack space={2} alignItems={'center'}>
-                                            <HStack space={1} alignItems={'center'}>
-                                                {/* <Image alt="graduate icon" source={require('../../assets/Home/graduate_student.png')} size="3" /> */}
-                                                <Text style={{fontSize: 10, fontWeight: '600'}} color={'greyScale.800'}>By :</Text>
-                                                <Text style={{fontSize: 11, fontWeight: '600'}} color={'greyScale.800'}>{data.instructorName}</Text>
+                                <TouchableOpacity onPress={()=>{console.log(data)}} key={index}>
+                                {
+                                    data.assessmentStatus === 'ACTIVE' ?
+                                    <HStack style={styles.CourseCard} space={4} mt={2}>
+                                        <Center>
+                                            <Ionicons name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={30} />
+                                        </Center>
+                                        <VStack style={styles.CardContent} space={1}>
+                                            <HStack justifyContent="space-between" alignItems="center" space={2}>
+                                                <Text noOfLines={2} style={{ fontSize: 14, fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>{data.assessmentTitle}</Text>
                                             </HStack>
-                                        </HStack>
-                                        <HStack alignItems="center" justifyContent={'space-between'}>
-                                            <HStack space={2}>
-                                                <Text color={'greyScale.800'} style={{fontSize: 10, fontWeight: '600'}}>Fee</Text>
-                                                <Text style={{fontSize: 12, fontWeight: 'bold', color: '#000000'}}>{currency}{data.fee}</Text>
+                                            <HStack space={2} alignItems={'center'}>
+                                                <HStack space={1} alignItems={'center'}>
+                                                    {/* <Image alt="graduate icon" source={require('../../assets/Home/graduate_student.png')} size="3" /> */}
+                                                    <Text style={{fontSize: 10, fontWeight: '600'}} color={'greyScale.800'}>By :</Text>
+                                                    <Text style={{fontSize: 11, fontWeight: '600'}} color={'greyScale.800'}>{data.instructorName}</Text>
+                                                </HStack>
                                             </HStack>
-                                        </HStack>
-                                    </VStack>
-                                    <VStack mr={3} alignItems={'center'}>
-                                        <Ionicons onPress={()=>AddTC(data.assessmentCode)} name="ios-cart-outline" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={25} />
-                                        <Text onPress={()=>{
-                                            dispatch(setBuyNowCourse(data))
-                                            navigation.navigate('BuyNow')
-                                        }} noOfLines={1} mt={1} style={{ fontSize: 14, paddingVertical:5, paddingHorizontal:8, backgroundColor: '#F0E1EB', fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>Buy now</Text>
-                                    </VStack>
-                                </HStack>
-                                </View>
+                                            <HStack alignItems="center" justifyContent={'space-between'}>
+                                                <HStack space={2}>
+                                                    <Text color={'greyScale.800'} style={{fontSize: 10, fontWeight: '600'}}>Fee</Text>
+                                                    <Text style={{fontSize: 12, fontWeight: 'bold', color: '#000000'}}>{currency}{data.fee}</Text>
+                                                </HStack>
+                                            </HStack>
+                                        </VStack>
+                                        {
+                                            allPurchagedCourses.includes(data.assessmentCode) ? null :
+                                            <VStack mr={3} alignItems={'center'}>
+                                                <Ionicons onPress={()=>AddTC(data.assessmentCode)} name="ios-cart-outline" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={25} />
+                                                <Text onPress={()=>{
+                                                    dispatch(setBuyNowCourse(data))
+                                                    navigation.navigate('BuyNow')
+                                                }} noOfLines={1} mt={1} style={{ fontSize: 14, paddingVertical:5, paddingHorizontal:8, backgroundColor: '#F0E1EB', fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>Buy now</Text>
+                                            </VStack>
+                                        }
+                                    </HStack>
+                                    : null
+                                }
+                                </TouchableOpacity>
                             );
                         // }
                     })}
@@ -431,7 +487,10 @@ const IndependentAssessment = () => {
             return (
                 allData.map((data, index)=> {
                     return (
-                        <TouchableOpacity onPress={()=>{}} key={index}>
+                        <TouchableOpacity onPress={()=>{console.log(data)}} key={index}>
+                        <>
+                        {
+                        data.assessmentStatus === 'ACTIVE' ?
                         <HStack style={styles.CourseCard} space={4} mt={2}>
                             <Center>
                                 <Ionicons name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={30} />
@@ -453,14 +512,20 @@ const IndependentAssessment = () => {
                                     </HStack>
                                 </HStack>
                             </VStack>
-                            <VStack mr={3} alignItems={'center'}>
-                                <Ionicons onPress={()=>AddTC(data.assessmentCode)} name="ios-cart-outline" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={25} />
-                                <Text onPress={()=>{
-                                    dispatch(setBuyNowCourse(data))
-                                    navigation.navigate('BuyNow')
-                                }} noOfLines={1} mt={1} style={{ fontSize: 14, paddingVertical:5, paddingHorizontal:8, backgroundColor: '#F0E1EB', fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>Buy now</Text>
-                            </VStack>
+                            {
+                                allPurchagedCourses.includes(data.assessmentCode) ? null :
+                                <VStack mr={3} alignItems={'center'}>
+                                    <Ionicons onPress={()=>AddTC(data.assessmentCode)} name="ios-cart-outline" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20,}} size={25} />
+                                    <Text onPress={()=>{
+                                        dispatch(setBuyNowCourse(data))
+                                        navigation.navigate('BuyNow')
+                                    }} noOfLines={1} mt={1} style={{ fontSize: 14, paddingVertical:5, paddingHorizontal:8, backgroundColor: '#F0E1EB', fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>Buy now</Text>
+                                </VStack>
+                            }
                         </HStack>
+                        : null
+                        }
+                        </>
                         </TouchableOpacity>
                     )
                 })
@@ -484,20 +549,29 @@ const IndependentAssessment = () => {
     return (
         <View style={{flex:1}}>
             <AppBar props={AppBarContent} />
-            <Input onChangeText={(text)=> {
-                setQuery(text.trim())
-            }} placeholder="Search" width="95%" alignSelf={"center"} marginTop={1} borderRadius="4" py="0" px="1" fontSize="11" fontWeight={"500"} InputLeftElement={<Icon m="2" ml="3" size="6" color="gray.400" as={<MaterialIcons name="search" />} />} />
-            <ScrollView style={{width:"95%", alignSelf:"center"}}>
-                {query !== '' ? getSearchedAssessments() :
-                    <>
-                        {
-                            selectedCategory !== null ? 
-                            showAssessmentsForSelectedCategory()
-                            : RenderCategory()
+            {
+                isLoaded ? // checking if all assessmets are loaded or not
+                <>
+                    <Input onChangeText={(text)=> {
+                        setQuery(text.trim())
+                    }} placeholder="Search" width="95%" alignSelf={"center"} marginTop={1} borderRadius="4" py="0" px="1" fontSize="11" fontWeight={"500"} InputLeftElement={<Icon m="2" ml="3" size="6" color="gray.400" as={<MaterialIcons name="search" />} />} />
+                    <ScrollView style={{width:"95%", alignSelf:"center"}}>
+                        {query !== '' ? getSearchedAssessments() :
+                            <>
+                                {
+                                    selectedCategory !== null ? 
+                                    showAssessmentsForSelectedCategory()
+                                    : RenderCategory()
+                                }
+                            </>
                         }
-                    </>
-                }
-            </ScrollView>
+                    </ScrollView>
+                </>
+                :
+                <View style={{justifyContent:"center", flex:1, alignItems:"center"}}>
+                    <Text style={{marginLeft:5, fontSize: 13, fontWeight: 'bold'}}>Loading ...</Text>
+                </View>
+            }
         </View>
     )
 }

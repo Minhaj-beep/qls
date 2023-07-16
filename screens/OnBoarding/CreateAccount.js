@@ -53,6 +53,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import {phone} from 'phone';
+import PushNotification from 'react-native-push-notification';
 
 const {width, height} = Dimensions.get('window');
 
@@ -193,6 +194,15 @@ const CreateAccount = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const hadnleNotification = () => {
+    PushNotification.localNotification({
+      channelId:"test-channel",
+      title:"You have recived a local notification",
+      message:"Hooray! blaa blaa blaa blaa blaa bla  bla bla balaaaaa!"
+    })
+    console.log('Done: test-channel')
+  }
+
   async function CheckLogin() {
     dispatch(setLoading(true));
     await AsyncStorage.getItem('Email')
@@ -287,9 +297,6 @@ const CreateAccount = ({navigation}) => {
       ErrMobile !== true && MobileNo !== '' &&
       ErrLastName !== true && LastName !== ''
     ) {
-      //API CALL
-      //  let CallResponse = await FetchPost('none', body, 'register');
-      //   console.log(CallResponse);
 
       const requestOptions = {
         method: 'POST',
@@ -301,11 +308,11 @@ const CreateAccount = ({navigation}) => {
         },
         body: JSON.stringify(body),
       };
-      // console.log(requestOptions);
       await fetch(BaseURL + 'register', requestOptions)
-        .then(response => response.json())
-        .then(result => {
-          dispatch(setLoading(false));
+      .then(response => response.json())
+      .then(result => {
+        console.log('requestOptionsssssssssssssssssssssssssssss');
+        dispatch(setLoading(false));
           if (result.status === 200) {
             setVmodal(true);
             setTime(60);
@@ -324,20 +331,25 @@ const CreateAccount = ({navigation}) => {
     } else {
       if (FullName === ''){
         firstNameRef.current.focus()
+        setErrFullName(true)
         console.log('.current.focus()1')
       } else if (LastName === '') {
         lastNameRef.current.focus()
+        setErrLastName(true)
         console.log('.current.focus()2')
       } else if (Email ==='' || ErrEmail ) {
         emailRef.current.focus()
+        setErrEmail(true)
         console.log('.current.focus()3')
       }
        else if (ErrMobile || MobileNo === '' || MobileNo === null) {
           mobileNumberRef.current.focus()
+          setErrMobile(true)
           console.log('.current.focus()4')
         } 
         else if (Password === '' || ErrPassword ) {
           passwordRef.current.focus()
+          setErrPassword(true)
           console.log('.current.focus()5')
       } else {
         alert('Please enter the details properly!!!!');
@@ -492,6 +504,7 @@ const CreateAccount = ({navigation}) => {
       <ScrollView>
         <Center w="100%">
           <Box safeArea p="2" w="90%" maxW="350" py="8">
+            <TouchableOpacity onPress={()=>hadnleNotification()}>
             <Heading
               size="md"
               color="coolGray.800"
@@ -501,6 +514,7 @@ const CreateAccount = ({navigation}) => {
               fontWeight="semibold">
               Create New Account
             </Heading>
+            </TouchableOpacity>
             <VStack space={3} mt="5">
               <FormControl>
                 <FormControl.Label
@@ -520,6 +534,7 @@ const CreateAccount = ({navigation}) => {
                   bg="#f3f3f3"
                   placeholder="Enter First Name"
                   onChangeText={text => {
+                    // setErrFullName(false)
                     let ValT = TextVal(text);
                     if (ValT === true) {
                       setErrFullName(false);

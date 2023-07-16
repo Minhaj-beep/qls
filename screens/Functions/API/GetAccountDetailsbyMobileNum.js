@@ -15,7 +15,7 @@ const GetAccountDetailsbyMobileNum = async (num) => {
     }),
   };
   const response = await fetch(
-    BaseURL + '/getAccountDetailsbyMobileNum',
+    BaseURL + 'getAccountDetailsbyMobileNum',
     requestOptions,
   )
   return response.json();

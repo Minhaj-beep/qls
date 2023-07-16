@@ -91,23 +91,24 @@ const Profile = ({navigation}) => {
       const requestOptions = {
         method: 'GET',
         // headers:{
-        //   'Accept': 'application/json',
-        //   'Content-Type': 'application/json',
-        //   'x-auth-token':UserD.JWT,
-        // },
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          gmailUserType: 'STUDENT',
-          token: Email,
-        },
-      };
-      await fetch(BaseURL + 'getStudentByEmail?email=' + Email, requestOptions)
+          //   'Accept': 'application/json',
+          //   'Content-Type': 'application/json',
+          //   'x-auth-token':UserD.JWT,
+          // },
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            gmailUserType: 'STUDENT',
+            token: Email,
+          },
+        };
+        await fetch(BaseURL + 'getStudentByEmail?email=' + Email, requestOptions)
         .then(response => response.json())
         .then(result => {
           if (result.status === 200) {
             dispatch(setProfileData(result.data));
             updateProfileData(result.data);
+            console.log('___________________________________', Email)
             console.log("Thsi the entire data: ", result.data);
             // let DD = result.data;
             // let Mnum = DD.mobileNumber;
@@ -116,15 +117,15 @@ const Profile = ({navigation}) => {
             dispatch(setLoading(false));
           } else if (result.status > 200) {
             dispatch(setLoading(false));
-            alert('Error GetProfileD: ' + result.message);
-            console.log('Error GetProfileD: ' + result.message);
+            alert('Error GetProfileD: 1 ' + result.message);
+            console.log('Error GetProfileD: 1 ' + result);
           }
           // console.log(result);
         })
         .catch(error => {
           dispatch(setLoading(false));
-          console.log('Error GetProfileD: ' + error);
-          alert('Error GetProfileD: ' + error);
+          console.log('Error GetProfileD: 2 ' + error);
+          alert('Error GetProfileD: 2 ' + error);
         });
     }
   };
@@ -141,7 +142,7 @@ const Profile = ({navigation}) => {
     setlinkedin(PData.linkedin);
     settwitter(PData.twitter);
     setMobileNo(PData.mobileNumber);
-    if(PData.mobileNumber.match(/\W/)){
+    if(PData.hasOwnProperty('mobileNumber') && PData.mobileNumber.match(/\W/)){
       const splitted = PData.mobileNumber.split("+")
       setMobileNo(splitted[1])
       setCountryCode(splitted[0])

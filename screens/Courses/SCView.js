@@ -54,17 +54,24 @@ import moment from 'moment';
 import { RequestDemoClass } from '../Functions/API/RequestDemoClass'
 import { GetDemoReqbyCourseCode } from '../Functions/API/GetDemoClassListbyCourseCode';
 import { setJoinDemoClassData } from '../Redux/Features/CourseSlice';
+import { SetCourseProgress } from '../Functions/API/CourseProgress';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import CountDownTimer from 'react-native-countdown-timer-hooks'
+import { AirbnbRating } from 'react-native-ratings';
+import { useIsFocused } from '@react-navigation/native';
+import GetScheduledLiveCourseClass from '../Functions/API/GetScheduledLiveCourseClass';
 
 
 const {width, height} = Dimensions.get('window');
 
 const SCView = ({navigation}) => {
-
+  const isFocused = useIsFocused();
   const dispatch = useDispatch();
   const toast = useToast();
   const [ActiveSessions, setActiveSessions] = useState([]);
   const CData = useSelector(state => state.Course.SCData);
   const [type, setType] = useState(false)
+  const [loaded, setIsLoaded] = useState(false)
   const CourseData = CData.CDD;
   const [InstructorName, setInstructorName] = useState('No Name');
   const [profileImgPath, setprofileImgPath ] = useState(null);
@@ -72,9 +79,9 @@ const SCView = ({navigation}) => {
   const email = useSelector(state => state.Auth.Mail);
   const [CourseTitle, setCourseTitle] = useState();
   const [CourseD, setCourseD] = useState();
-  const [allCourseData, setAllCourseData] = useState([])
+  const [allCourseData, setAllCourseData] = useState({})
   const [ChapterD, SetChapterD] = useState();
-  const [LiveClass, setLiveClass] = useState();
+  const [LiveClass, setLiveClass] = useState([]);
   const [Instructor, setIns] = useState();
   const [courses, setCourses] = useState(null);
   const [IsLCActive, setIsLCActive] = useState(false);
@@ -90,8 +97,35 @@ const SCView = ({navigation}) => {
   const JWT = useSelector(state => state.Auth.JWT);
   const [isDemoClassAvailable, setIsDemoClassAvailable] = useState(false)
   const [DemoClassData, setDemoClassData] = useState({})
-  // console.log('JWTTTTTTTTTTTTTTTTTTTTTTTTTTT:', JWT)
+  const [showEmptyClass, setShowEmptyCLass] = useState(0)
+  const [ChapterOrd, setChapterOrd] = useState(null)
+  const [LessonOrd, setLessonOrd] = useState(null)
+  const [videoEnd, isVideoEnd] = useState(false)
+  const [ isComponentLoaded, setIsComponentLoaded] = useState(false);
+  const [liveClassList, setLiveClassList] = useState([])
+  const [liveObjForToday, setLiveObjForToday] = useState({})
+  const [timerId, setTimerId] = useState(null);
+
   useEffect(()=>{
+    if(isFocused && !type) {
+      console.log('_______________________MOUNTED__________________________')
+      startTimer()
+    } else {
+      console.log('_______________________UNMOUNTED__________________________')
+      endTimer()
+    }
+  },[isFocused, type])
+
+  useEffect(()=>{
+    if(timerId !== null){
+      return ()=> {
+        console.log('_______________________UNMOUNTED__________________________')
+        endTimer()
+      }
+    }
+  },[timerId])
+
+  const startTimer = () => {
     let sec = 0
     let check = setInterval(()=>{
       getDemoReqbyCourseCode()
@@ -99,27 +133,128 @@ const SCView = ({navigation}) => {
       console.log(sec)
     },5000)
 
+    setTimerId(check)
+  }
+  const endTimer = () => {
+    clearInterval(timerId);
+  }
+
+  useEffect(()=>{
+    let sec = 0
+    let check = setInterval(()=>{
+      Object.keys(liveClassList).length > 0 ? findClassForToday() : null
+      sec =+ 1
+      // console.log(sec)
+    },5000)
+
     return () => {
       clearInterval(check)
     }
-  },[])
+  },[liveClassList]) // Finding live class for today if it is in active state
 
-  const getDemoReqbyCourseCode = async () => {
-    try {
-      let response = await GetDemoReqbyCourseCode(JWT, CourseData.courseCode);
-      if (response.status === 200 && response.message !== 'Not Available') {
-          setIsDemoClassAvailable(true)
-          setDemoClassData(response.data)
-          console.log(response)
+  const findClassForToday = () => {
+    // console.log('Finding todays live class')
+    const date = new Date().toISOString().slice(0, 10)
+
+    // Finding today's object for live class
+    let todayObject = {}
+    liveClassList.map((i)=>{
+      let dateSplit = i.scheduledDate.split('T')
+      if(dateSplit[0] === date){
+        todayObject = i
+      }
+    })
+
+    // Finding if joining link is present and class time has not exceed
+    if(Object.keys(todayObject).length > 0 && todayObject.hasOwnProperty('joinLiveLink')) {
+      //checking the time
+      const nowInIST = new Date(new Date().getTime() + 330 * 60 * 1000);
+      const givenTime = todayObject.endTime;
+      const givenTimeInIST = new Date(nowInIST.getFullYear(), nowInIST.getMonth(), nowInIST.getDate(), ...givenTime.split(':'));
+
+      if(givenTimeInIST > nowInIST) { //'The given time has not passed yet. so let's return the object to perform live class operations
+        setLiveObjForToday(todayObject)
       } else {
-        console.log(response)
+        setLiveObjForToday({}) //The given time has passed. So let's pass an empty object to dismiss live class operations
+      }
+    } else {
+      setLiveObjForToday({})
+    }
+    // console.log('Checking if today date is present')
+  }
+
+  useEffect(()=>{ // each time we getting the course details when component in focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      GetCourseDetails(email,CourseData.courseCode);
+      if(CourseData.isLive){
+        getScheduledLiveCourseClass()
+      }
+    });
+    return unsubscribe;
+  },[navigation])
+
+  // Saving the the video completion progress and re-rendering the component
+  useEffect(()=>{
+    if(videoEnd && ChapterOrd !== null && LessonOrd !== null){
+      saveCourseProgress()
+      isVideoEnd(false)
+    }
+  }, [videoEnd])
+
+  const saveCourseProgress = async () => {
+    console.log(`{
+      chapterOrder: ${ChapterOrd}
+      lessonOrder: ${LessonOrd}
+      email: ${email}
+      courseCode: ${CourseData.courseCode}
+    }`)
+    try {
+      const result = await SetCourseProgress(email, ChapterOrd, LessonOrd, CourseData.courseCode)
+      if(result.status === 200) {
+        console.log(result, "saveCourseProgress success")
+        GetCourseDetails(email,CourseData.courseCode)
+      } else {
+        console.log(result, 'saveCourseProgress error 1')
+      }
+    } catch (e) {
+      console.log('saveCourseProgress error 2 :', e)
+    }
+  }
+
+  const getScheduledLiveCourseClass = async () => {
+    try {
+      let response = await GetScheduledLiveCourseClass(JWT, CourseData.courseCode);
+      if (response.status === 200 && response.message !== 'Not Available') {
+          // setIsDemoClassAvailable(true)
+          // setDemoClassData(response.data)
+          console.log('This is the getScheduledLiveCourseClass response: ', response)
+      } else {
+        console.log(response, 'getScheduledLiveCourseClass error___________________________')
         // alert("getDemoClassListbyCourseCode 1 " + response.message);
-        console.log("getDemoReqbyCourseCode 1 " + response.message);
+        // console.log("getDemoReqbyCourseCode 1 " + response.message);
       }
      } catch (err) {
-      console.log("getDemoReqbyCourseCode 2 " + err.message);
+      console.log("getScheduledLiveCourseClass 2 __________________________" + err);
       // alert('getDemoClassListbyCourseCode 2 ' + err.message);
-     }
+    }
+  }
+
+  const getDemoReqbyCourseCode = async () => {
+      try {
+        let response = await GetDemoReqbyCourseCode(JWT, CourseData.courseCode);
+        if (response.status === 200 && response.message !== 'Not Available') {
+            setIsDemoClassAvailable(true)
+            setDemoClassData(response.data)
+            console.log('This is the demo class response: ', response)
+        } else {
+          console.log(response, 'getDemoReqbyCourseCode error___________________________')
+          // alert("getDemoClassListbyCourseCode 1 " + response.message);
+          // console.log("getDemoReqbyCourseCode 1 " + response.message);
+        }
+       } catch (err) {
+        console.log("getDemoReqbyCourseCode 2 __________________________" + err.message);
+        // alert('getDemoClassListbyCourseCode 2 ' + err.message);
+       }
   }
   
   const AppBarContent = {
@@ -159,13 +294,14 @@ const sendMailToInstructor = async () => {
 
 const requestDemoClass = async () => {
   if(allCourseData.isDemo === false || allCourseData.isDemo !== undefined){
+    console.log('Hello')
     //
     console.log(CourseData)
     try {
       let response = await RequestDemoClass(email, CourseData.courseCode);
       if (response.status === 200) {
           console.log('this is da data: ' + response)
-          GetCourseDetails()
+          GetCourseDetails(email,CourseData.courseCode)
           console.log('PC courses retrieved successfully');
       } else {
         alert(response.message);
@@ -177,6 +313,23 @@ const requestDemoClass = async () => {
      }
   } else {
     console.log('Opps')
+  }
+}
+
+const filterExpiredClasses = liveClass => {
+  const timestamp = new Date(liveClass.date).getTime() + 3600000;
+
+  const now = new Date().getTime();
+
+  if (timestamp > now) {
+      // future
+      return true;
+  } else if (timestamp < now) {
+      // past
+      return false;
+  } else {
+      // now
+      return false;
   }
 }
 
@@ -210,6 +363,7 @@ const AddTC = async () => {
          response.data.map((i)=>{
            if(i.courseCode === CData.CDD.courseCode){
              setType(true)
+             setIsLoaded(true)
           }
          })
          console.log('PC courses retrieved successfully');
@@ -330,28 +484,33 @@ const AddTC = async () => {
       );
     };
     
-    // const currency = CourseD.currency === 'INR' ? '₹' : '$';
   const GetCourseDetails = async(mail, code) =>{
-    dispatch(setLoading(true))
     try {
       let response = await GetCourseByCode(JWT, code);
       if (response.status === 200) {
-        console.log('========Is demo present===========>', response.data)
-        dispatch(setFullCourseData(response.data));
+        // console.log('========Is demo present===========>', response.data.courseProgressPercentage)
+        console.log('========Is course list present===========>', response)
+        // if exist setting up live class list data to state
+        if (response.data.hasOwnProperty('liveCourseClassList')) setLiveClassList(response.data.liveCourseClassList)
+        dispatch(setFullCourseData(response.data)); 
         setAllCourseData(response.data)
         let FData = response.data;
         if(response.data.totalCourseDuration)
            setCourseDuration(response.data.totalCourseDuration)
          if (FData.chapterList.length > 0) {
           SetChapterD(FData.chapterList);
+          console.log('Chapter list: 2', FData.chapterList)
          }
+        setIsComponentLoaded(true)
       } else {
-        console.log("GetCourseDetails: " + response.message);
-        // alert( "GetCourseDetails: " + response.message);
+        console.log("GetCourseDetails errorrrrrrrrrrrrrrrrrrrrr 1: " + response.message);
+        alert( "GetCourseDetails: " + response.message);
+        setIsComponentLoaded(true)
       }
     } catch (error) {
-      console.log("GetCourseDetails: " + error.message);
-      // alert("GetCourseDetails: " + error.message);
+      console.log("GetCourseDetails errorrrrrrrrrrrrrrrrrrrrr 2: " + error.message);
+      alert("GetCourseDetails: " + error.message);
+      setIsComponentLoaded(true)
     }
   };
 
@@ -390,6 +549,15 @@ const AddTC = async () => {
           if (LData.length !== 0){
             // console.log('Live class data::::::::::::::::: ', LData)
             setLiveClass(LData);
+            LData.map((data, i) => {
+              var utc = new Date().toJSON().slice(0,10).replace(/-/g,'-')
+              var time = new Date().getTime()
+              var stimestap = new Date(data.date).getTime() + 3600000
+              console.log('utc', time, stimestap, data.liveStatus)
+              if(utc <= data.date.substr(0, 10) && data.liveStatus === 'SCHEDULED' || data.liveStatus === 'INPROGRESS' && time <= stimestap){
+                setShowEmptyCLass(showEmptyClass+1)
+              }
+            })
             let ActiveClass = LData.filter(SetLCData);
             if (ActiveClass.length !== 0) {
               console.log(' Live Class ' + ActiveClass[0].topicName);
@@ -454,7 +622,7 @@ const AddTC = async () => {
      if (response.status === 200) {
       if (response.data.length !== 0) {
         let data = response.data;
-        console.log('Finding all instructor destails: ', data.totalLearners, ' totalLearners and ', data.totalCourses, 'totalCourses')
+        // console.log('Finding all instructor destails: ', data.totalLearners, ' totalLearners and ', data.totalCourses, 'totalCourses')
         setCourses(data);
         dispatch(setInstructorCourses(data));
       } else {
@@ -499,7 +667,7 @@ const AddTC = async () => {
               let chapterList = data[0].chapterList;
                if (chapterList.length !== 0){
                 SetChapterD(chapterList);
-                // console.log(chapterList);
+                console.log('Chapter List: ', chapterList);
                }
             }
           } else if (result.status > 200) {
@@ -520,14 +688,21 @@ const AddTC = async () => {
   const OverTest = () => {
     // console.log(OverviewSource);
     return (
-      <View>
+      <View style={{flex:1}}>
+        {/* <View style={{marginBottom:10,}}>
+          
+        </View> */}
+          {/* <View mt={2} style={{position:"absolute", backgroundColor:"rgba(0,0,0,0.5)", width:"100%", alignItems:"center", bottom:0}}>
+            <Text>Raed more</Text>
+          </View> */}
+        <View style={{width:"90%", alignSelf:"center"}}>
         <RenderHtml
-          contentWidth={width / 3}
-          source={OverviewSource}
-          baseStyle={{color:"#8C8C8C"}}
-          renderersProps={renderersProps}
-        />
-        {/* <Text>yeet</Text> */}
+            contentWidth={width / 3}
+            source={OverviewSource}
+            baseStyle={{color:"#8C8C8C"}}
+            renderersProps={renderersProps}
+          />
+        </View>
       </View>
     );
   };
@@ -571,16 +746,16 @@ const AddTC = async () => {
 
   const CBody = (dat, index) => {
     const LessonData = dat.lessonList;
-    // console.log('This is dat: ', dat);
+    console.log('This is dat: ', dat);
     return (
       <View style={{marginTop: 5, marginBottom: 5}}>
         {LessonData.map((data, index) => {
-          // console.log(data);
+          console.log(data);
           let AData = {
             Data: data,
             chapterOrder:dat.chapterOrder,
           };
-          // console.log(AData);
+          console.log(AData);
           return (
             <TouchableOpacity
               key={index}
@@ -588,9 +763,12 @@ const AddTC = async () => {
                 if (type) {
                   console.log('Purchased')
                   if (data.isAssesment === false) {
-                  setVideoPath(data.lessonVideoPath);
-                  setCourseTitle(data.lessonName);
-                  setResources(data.resourceDetails);
+                    setChapterOrd(dat.chapterOrder)
+                    setLessonOrd(data.lessonOrder)
+                    // alert(data.lessonOrder)
+                    setCourseTitle(data.lessonName);
+                    setResources(data.resourceDetails);
+                    setVideoPath(data.lessonVideoPath);
                 } else if (data.isAssesment === true) {
                   setResources([]);
                   navigation.navigate('Assessments');
@@ -644,7 +822,7 @@ const AddTC = async () => {
                     ) : null}
                   </View>
                   <VStack>
-                    <Text color={'#000'} fontSize={14} fontWeight={'bold'}>
+                    <Text color={'#000'} maxWidth={width*0.7} fontSize={14} fontWeight={'bold'}>
                       {data.lessonName}
                     </Text>
                     { data.isAssesment !== true ?
@@ -674,10 +852,136 @@ const AddTC = async () => {
     setActiveSessions(active);
   };
 
+  const RenderLiveCourses = ({data, i}) => {
+    var utc = new Date().toJSON().slice(0,10).replace(/-/g,'-')
+    var time = new Date().getTime()
+    var stimestap = new Date(data.date).getTime() + 3600000
+    // console.log('utc', time, stimestap, data.liveStatus)
+    // if(utc <= data.date.substr(0, 10) && data.liveStatus === 'SCHEDULED' || data.liveStatus === 'INPROGRESS'){
+      
+    // }
+    //getting the value of seconds for upcoming classes
+    const remainingTime = Date.parse(data.date) - Date.now();
+    const sec = Math.floor((remainingTime) / 1000)
+    const utcDate = new Date(data.date)
+    const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+    const istDateTime = utcDate.toLocaleString('en-US', istOptions);
+
+    let now = new Date()
+    const startDate = new Date(data.date)
+    const endDate = new Date(data.toDate)
+    // console.log(now <= endDate, 'How these can we true', now, endDate)
+    const [isStart, setIsStart] = useState(now >= startDate && now <= endDate ? true : false)
+
+    useEffect(()=>{
+      if(isStart && data.hasOwnProperty('joinLiveLink')) setLiveObjForToday(data)
+    },[isStart])
+    
+    //check wheather purchaged or not and render live classes based on that
+    if(type) {
+      return (
+        <TouchableOpacity
+        onPress={()=> {
+          if(isStart){
+            console.log(data)
+            // dispatch(setLiveClassD(ActiveLCData));
+            // navigation.navigate('LiveClass', { LiveClassData : data });
+          }
+        }}
+        key={i}>
+          {/* {console.log('_____________LIVE CLASS DATA______________', data.liveStatus)} */}
+          <HStack alignItems={'center'} justifyContent={'space-between'} mt={3} mr={3} ml={3}>
+          <VStack>
+            <Text maxWidth={width*0.7} color={'#000'} fontSize={14} fontWeight={'bold'}>
+              Live Class {i + 1} : {data.topicName}
+            </Text>
+            {
+              data.liveStatus ? 
+              <Text
+                color={'greyScale.800'}
+                fontSize={12}
+                fontWeight={'bold'}>
+                {istDateTime} 
+              </Text>
+              : 
+              <Text
+                color={'greyScale.800'}
+                fontSize={12}
+                fontWeight={'bold'}>
+                {istDateTime} 
+              </Text>
+            }
+          </VStack>
+          {
+            isStart ? // Start Class now
+            <HStack bg={'primary.50'} paddingX={1} borderRadius={3}>
+              <Text style={{fontSize:12,color: '#FFFFFF', fontWeight:"bold", padding:5, borderRadius:3}}>Join Live</Text>
+            </HStack>
+            :
+            <>
+              {
+                now < startDate ? // Yet to start the class
+                  <CountDownTimer
+                    containerStyle={styles.count}
+                    timestamp={sec}
+                    timerCallback={() => {
+                      setIsStart(true)
+                    }}
+                    textStyle={{backgroundColor: 'White', color: '#8C8C8C',  fontWeight:"bold", fontSize: 12, borderWidth: 0,  }}
+                  /> 
+                : // Class time has passed
+                  <HStack bg={'rgba(41,211,99, 0.2)'} alignItems={'center'} paddingX={1} borderRadius={3}>
+                    <AntDesign size={13} name="checkcircle" color="#29d363" />
+                    <Text style={{fontSize:9,color: '#29d363', fontWeight:"bold", padding:5, borderRadius:3}}>Completed</Text>
+                  </HStack>
+              }
+            </>
+          }
+          </HStack>
+          { LiveClass.length !== i + 1 ? <Divider mt={1} bg={'greyScale.800'} thickness={1} mb={2} /> : null }
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <TouchableOpacity>
+          <HStack alignItems={'center'} justifyContent={'space-between'} mt={3} mr={3} ml={3}>
+            <VStack>
+              <Text maxWidth={width*0.7} color={'#000'} fontSize={14} fontWeight={'bold'}>
+                Live Class {i + 1} : {data.topicName}
+              </Text>
+              {
+                data.liveStatus ? 
+                <Text
+                  color={'greyScale.800'}
+                  fontSize={12}
+                  fontWeight={'bold'}>
+                  {istDateTime} 
+                </Text>
+                : 
+                <Text
+                  color={'greyScale.800'}
+                  fontSize={12}
+                  fontWeight={'bold'}>
+                  {istDateTime} 
+                </Text>
+              }
+            </VStack>
+            <Icon
+              name={data.liveStatus === 'INPROGRESS' && type  ? 'lock-open' : 'lock-closed'}
+              size={17}
+              style={{padding: 5}}
+              color="#364b5b"
+            />
+          </HStack>
+        </TouchableOpacity>
+      )
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Navbar props={AppBarContent} />
-      {stateLoading ? <></>
+      {stateLoading || !isComponentLoaded ? <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>Loading ...</Text>
         :
         <ScrollView
         contentContainerStyle={styles.TopContainer}
@@ -711,6 +1015,7 @@ const AddTC = async () => {
               onError={()=>{
                 console.log('Something went wrong...');
               }}
+              onEnd = {()=>isVideoEnd(true)}
               pictureInPicture={true}
               navigator={navigation}
               isFullscreen={false}
@@ -719,47 +1024,32 @@ const AddTC = async () => {
               paused={true}
             />
 
-            <Text
-              mt={1}
-              style={{
-                fontSize: 15,
-                color: '#000000',
-                fontWeight: 'bold',
-                maxWidth: width / 1,
-              }}>
+            <Text mt={1} style={{ fontSize: 15, color: '#000000', fontWeight: 'bold', maxWidth: width / 1,}}>
               {CourseTitle}
             </Text>
-            {type ? <></> :
-              <HStack space={2}>
-                  <Text
-                    style={{fontSize: 12, fontWeight: 'bold'}}
-                    color={'greyScale.800'}>
-                    By
-                  </Text>
-                  <Text
-                    style={{fontSize: 13, fontWeight: 'bold'}}
-                    color="primary.100">
-                    {CourseD.instructorName}
-                  </Text>
-                </HStack>}
+            <HStack space={2}>
+              <Text style={{fontSize: 12, fontWeight: 'bold'}} color={'greyScale.800'}>By</Text>
+              <Text style={{fontSize: 13, fontWeight: 'bold'}} color="primary.100">{CourseD.instructorName}</Text>
+            </HStack>
             {!type ?
            <HStack space={2} mt="2" alignItems="center">
               <HStack space={2} alignItems="center">
                 <HStack space={1}>
-                  {[...Array(CourseD.ratingCount)].map((e, i) => {
-                    return (
-                      <Image
-                        key={i}
-                        source={require('../../assets/Home/star.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                    );
-                  })}
+                  <AirbnbRating
+                    count={5}
+                    isDisabled={true}
+                    showRating={false}
+                    defaultRating={`${CourseD.rating}`}
+                    size={15}
+                    value={`${CourseD.rating}`}
+                  />
                 </HStack>
-                <Text style={{fontSize: 14, color: '#364b5b'}}>
-                  {CourseD.rating}({CourseD.ratingCount})
-                </Text>
+                {
+                  CourseD.ratingCount !== 0 ?
+                  <Text style={{fontSize: 14, color: '#364b5b'}}>{CourseD.rating.toFixed(1)}({CourseD.ratingCount})</Text>
+                  :
+                  <Text style={{fontSize: 14, color: '#364b5b'}}>{CourseD.rating}({CourseD.ratingCount})</Text>
+                }
                 <Text
                   style={{
                     fontSize: 14,
@@ -771,42 +1061,46 @@ const AddTC = async () => {
                 </Text>
               </HStack>
             </HStack> : <></> }
-{/* {console.log(type, 'type', ActiveLCData, 'ActiveLCData', IsLCActive, 'IsLCActive')} */}
+            
           {/* {type && ActiveLCData && IsLCActive === true ? */}
-          {type && ActiveLCData && IsLCActive === true ?
-            <TouchableOpacity
-                onPress={()=> {
-                  // console.log(LiveClassD)
-                  dispatch(setLiveClassD(ActiveLCData));
-                  navigation.navigate('LiveClass', { LiveClassData : LiveClass });
-                }}
-            >
-              <HStack
-                justifyContent={'space-between'}
-                bg={'primary.100'}
-                p={4}
-                borderRadius={8}
-                mt={4}
-                >
-                <HStack alignItems={'center'} space={2}>
-                  <Image
-                    source={require('../../assets/Courses/streaming_pink.png')}
-                    alt="Stream"
-                    size={7}
-                  />
-                  <Text fontSize={16} color={'#FFF'}>
-                    Join now
-                  </Text>
+          {
+            Object.keys(liveObjForToday).length > 0 ?
+              <TouchableOpacity
+                  onPress={()=> {
+                    console.log(liveObjForToday)
+                    navigation.navigate('LiveClass', { LiveClassData : liveObjForToday });
+                    // dispatch(setLiveClassD(ActiveLCData));
+                    // navigation.navigate('LiveClass', { LiveClassData : LiveClass });
+                  }}
+              >
+                <HStack
+                  justifyContent={'space-between'}
+                  bg={'primary.100'}
+                  p={4}
+                  borderRadius={8}
+                  mt={4}
+                  >
+                  <HStack alignItems={'center'} space={2}>
+                    <Image
+                      source={require('../../assets/Courses/streaming_pink.png')}
+                      alt="Stream"
+                      size={7}
+                    />
+                    <Text fontSize={16} color={'#FFF'}>
+                      Join now
+                    </Text>
+                  </HStack>
+                  {/* <Text fontSize={16} color={'#FFF'}>
+                    02:45:00
+                  </Text> */}
                 </HStack>
-                <Text fontSize={16} color={'#FFF'}>
-                  02:45:00
-                </Text>
-              </HStack>
-            </TouchableOpacity>
+              </TouchableOpacity>
             : null
-            }
+          }
+            {/* : null
+            } */}
 
-            {!type  ?
+            {
            <HStack
               justifyContent={'space-between'}
               mt={2}
@@ -822,7 +1116,7 @@ const AddTC = async () => {
                 </Text>
               </VStack>
               {
-                Object.keys(allCourseData).length > 0 ?
+                allCourseData && !type &&
                 <>
                   {console.log(allCourseData.isDemoRequested, "============WHY=================")}
                   {
@@ -839,11 +1133,11 @@ const AddTC = async () => {
                     </Button>
                     : null
                   }
-                </> : null
+                </>
               }
-            </HStack> : null}
+            </HStack>}
             {
-              isDemoClassAvailable ? 
+              isDemoClassAvailable && !type && DemoClassData.hasOwnProperty('studentLink') ? 
               <TouchableOpacity onPress={()=>{
                 dispatch(setJoinDemoClassData(DemoClassData))
                 navigation.navigate('JoinDemoClass')
@@ -870,7 +1164,7 @@ const AddTC = async () => {
               : null
             }
             <VStack space={4} mt={4}>
-              {purchasedCourse !== null ? console.log('purchasedCourse') : console.log('not data')}
+              {/* {purchasedCourse !== null ? console.log('purchasedCourse') : console.log('not data')} */}
               {!type ?
               <VStack space={4}>
                 <HStack justifyContent="space-between">
@@ -928,25 +1222,25 @@ const AddTC = async () => {
                 </Button>
               </VStack> :
               <VStack space={3}>
-                <HStack space={2} alignItems={'center'}>
+                { allCourseData && <HStack space={2} alignItems={'center'}>
                 <Center w="90%">
                   <Box w="100%">
                     <Progress size={'xs'}
                       mb={1}
                       mt={1}
-                      value={CourseProgress}
+                      value={allCourseData.courseProgressPercentage}
                       color={'primary.100'}
                     />
                   </Box>
                   </Center>
-                  {CourseProgress ? 
-                  <Text color={'#000'} fontSize={12}>{Number.isInteger(CourseProgress) ? CourseProgress : CourseProgress.toFixed(2) }%</Text>
+                  {allCourseData.courseProgressPercentage ? 
+                  <Text color={'#000'} fontSize={12}>{Number.isInteger(allCourseData.courseProgressPercentage) ? allCourseData.courseProgressPercentage : allCourseData.courseProgressPercentage.toFixed(2) }%</Text>
                   :
                   <Text color={'#000'} fontSize={12}>0%</Text>
                   }
                   {/* {Number.isInteger(cartA.taxValue) ? cartA.taxValue : cartA.taxValue.toFixed(2)} */}
                   
-                </HStack>
+                </HStack>}
                 <HStack justifyContent={'space-between'} alignItems={'center'}>
                   <Text color={'#000'} fontSize={14} fontWeight={'bold'}>Resource</Text>
                   <Button
@@ -1000,7 +1294,7 @@ const AddTC = async () => {
                 </HStack>
 
                 <VStack m={3}>
-                  {/* {console.log('Chapter D: ',ActiveSessions)} */}
+                  {/* {console.log('Chapter D: ',ChapterD)} */}
                   {ChapterD ? (
                     <Accordion
                       sections={ChapterD}
@@ -1035,48 +1329,17 @@ const AddTC = async () => {
                 </HStack>
 
                 {
-                  LiveClass ? (
+                  Object.keys(LiveClass).length ? (
                     LiveClass.map((data, i) =>{
-                      console.log('data', data)
                       return (
-                        <TouchableOpacity
-                        onPress={()=> {
-                          // console.log(LiveClassD)
-                          dispatch(setLiveClassD(ActiveLCData));
-                          navigation.navigate('LiveClass', { LiveClassData : data });
-                        }}
-                        key={i}>
-                          <HStack justifyContent={'space-between'} mt={3} mr={3} ml={3}>
-                          <VStack>
-                            <Text color={'#000'} fontSize={14} fontWeight={'bold'}>
-                              Live Class {i + 1} : {data.topicName}
-                            </Text>
-                            <Text
-                              color={'greyScale.800'}
-                              fontSize={12}
-                              fontWeight={'bold'}>
-                              {data.date.substr(11, 8)}  {data.date.substr(0, 10)} 
-                            </Text>
-                          </VStack>
-                          <Icon
-                            name={data.liveStatus === 'INPROGRESS' && type  ? 'lock-open' : 'lock-closed'}
-                            size={17}
-                            style={{padding: 5}}
-                            color="#364b5b"
-                          />
-                          </HStack>
-                          { LiveClass.length !== i + 1 ? <Divider mt={1} bg={'greyScale.800'} thickness={1} mb={2} /> : null }
-                        </TouchableOpacity>
-                      );
+                        <RenderLiveCourses data={data} i={i} />
+                      )
                     })
                   )
-                : <Text color={'greyScale.800'} fontSize={12} p={4} alignSelf="center">No Live Videos to show yet!</Text>}
-                {/* { LiveClass === null ? <Text color={'greyScale.800'} fontSize={12} p={4} alignSelf="center">You don't have any Live Videos</Text> : null} */}
-
+                : 
+                  <Text color={'greyScale.800'} fontSize={12} p={4} alignSelf="center">No Live Videos to show yet!</Text>
+                }
               </VStack>
-              {console.log(`[
-                Wha is type: ${type}
-              ]`)}
 
              { CourseData.isLive  ? <RenderTabs01/> : <RenderTabs02/>}
              {/* <RenderTabs02/> */}

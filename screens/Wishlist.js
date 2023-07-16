@@ -1,12 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
-import {StyleSheet, Text, View,SafeAreaView,ScrollView,Dimensions} from 'react-native';
+import {StyleSheet, View,SafeAreaView,ScrollView,Dimensions} from 'react-native';
 import React,{useEffect, useState} from 'react';
 import Navbar from './components/Navbar';
-import { VStack, HStack, Center, Image, Button,useToast} from 'native-base';
+import { VStack, HStack, Text, Center, Image, Button,useToast} from 'native-base';
 import { GetWishList } from './Functions/API/GetWishList';
 import {useSelector, useDispatch} from 'react-redux';
 import {AddToCart} from './Functions/API/AddToCart';
 import {RemoveFromWL} from './Functions/API/RemoveFromWL';
+import { AirbnbRating } from 'react-native-ratings';
 
 const {width, height} = Dimensions.get('window');
 
@@ -94,91 +95,63 @@ const Wishlist = ({navigation}) => {
     const currency = props.currency === 'INR' ? '₹' : '$';
     return (
       <View>
-        <View style={{backgroundColor:"#FFF", borderRadius:5, alignItems:"center", marginBottom:10}}>
-          <View style={{ width:"95%"}}>
-            <View style={{flexDirection:"row", marginTop:10, marginBottom:10}}>
-              <View>
-                <Image
-                  style={styles.cardImg}
-                  source={{uri: props.thumbNailImagePath}}
-                  alt="courseimg"
-                  resizeMode="cover"
-                />
-              </View>
-              <View style={{flex:1, flexDirection:"row", marginLeft:5, justifyContent:"space-between"}}>
-                  <View>
-                    <Text
-                      numberOfLines={2}
-                      style={{ fontSize: 12, fontWeight: 'bold', color: '#000000', maxWidth: width / 2.5,}}>
-                      {props.courseName}
-                    </Text>
-                    <View style={{flexDirection:"row"}}>
-                      <Text style={{ fontSize: 10, fontWeight: 'bold', color:"#8C8C8C", marginRight:2, maxWidth: width / 4, }} >
-                        By
-                      </Text>
-                      <Text
-                        style={{ fontSize: 10, fontWeight: 'bold', color:"#364b5b", maxWidth: width / 4, }}
-                        color={'primary.100'}>
-                        {props.instructorName}
-                      </Text>
-                    </View>
-                    <View style={{flexDirection:"row", marginTop:5}}>
-                      <Image
-                        source={require('../assets/Home/unstar.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                      <Image
-                        source={require('../assets/Home/unstar.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                      <Image
-                        source={require('../assets/Home/unstar.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                      <Image
-                        source={require('../assets/Home/unstar.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                      <Image
-                        source={require('../assets/Home/unstar.png')}
-                        alt="rating"
-                        size="3"
-                      />
-                      <Text style={{fontSize: 11, color:"#8C8C8C"}}>
-                        {props.rating}({props.ratingCount})
-                      </Text>
-                    </View>
-                  </View>
-                  <View>
-                    {/* <Text numberOfLines={2} style={{backgroundColor:"blue"}}>
-                      {props.isLive ? "Live" : "Recorded"}
-                    </Text> */}
-                    {props.isLive
-                      ?
-                      <Text pr={2} pl={2} borderRadius={20} style={{fontSize:10, paddingHorizontal:5, paddingVertical:1, borderRadius:10, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text>
-                      :
-                      <></>
-                    }
-                    <Text
-                      style={{fontSize: 10, color:"#8C8C8C", fontWeight: 'bold'}}>
-                      Fee
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 'bold',
-                        color: '#000000',
-                      }}>
-                      {currency}{props.fee}
-                    </Text>
-                  </View>
-              </View>
-            </View>
-          </View>
+        <View style={{backgroundColor:"#FFF", borderRadius:5, alignItems:"center", }}>
+          <VStack width={'95%'}>
+            <HStack space={2} paddingTop={2}>
+              <Image style={styles.cardImg} source={{uri: props.thumbNailImagePath}} alt="courseimg" resizeMode="cover"/>
+              <HStack flex={1} justifyContent={'space-between'}>
+                <VStack>
+                  <Text numberOfLines={2} style={{ fontSize: 12, fontWeight: 'bold', color: '#000000', maxWidth: width / 2.5,}}>{props.courseName}</Text>
+                  <HStack>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color:"#8C8C8C", marginRight:2, }} >By</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color:"#364b5b", }} color={'primary.100'}>{props.instructorName}</Text>
+                  </HStack>
+                  <HStack justifyContent={'space-between'}>
+                    <HStack space={1}>
+                      {
+                          props.hasOwnProperty('rating') ?
+                          <>
+                          <AirbnbRating
+                              count={5}
+                              isDisabled={true}
+                              showRating={false}
+                              defaultRating={`${props.rating}`}
+                              size={10}
+                              value={`${props.rating}`}
+                          />
+                              {
+                                  !Number.isInteger(props.rating) ?
+                                  <Text style={{fontSize: 14, color: '#364b5b'}}>{props.rating.toFixed(1)} ({props.ratingCount})</Text>
+                                  :
+                                  <Text style={{fontSize: 14, color: '#364b5b'}}>{props.rating} ({props.ratingCount})</Text>
+                              }
+                          </>
+                          : 
+                          <>
+                          <AirbnbRating
+                          count={5}
+                          isDisabled={true}
+                          showRating={false}
+                          defaultRating={0}
+                          size={10}
+                          value={0}
+                          />
+                          <Text style={{fontSize: 14, color: '#364b5b'}}>0 (0)</Text>
+                          </>
+                      }
+                    </HStack>
+                  </HStack>
+                </VStack>
+                <VStack alignItems={'flex-end'}>
+                  <Text mr={1} style={{fontSize: 10, color:"#8C8C8C", fontWeight: 'bold'}}>Fee</Text>
+                  <Text mr={1} style={{ fontSize: 10, fontWeight: 'bold', color: '#000000', }}>{currency}{props.fee}</Text>
+                  {props.isLive ? <Text marginTop={5} pr={2} pl={2} borderRadius={20} style={{fontSize:10, paddingHorizontal:5, paddingVertical:1, borderRadius:10, backgroundColor:'#F65656', color:'#FFF'}}>Live Courses</Text> : null}
+                </VStack>
+              </HStack>
+            </HStack>
+          </VStack>
+
+          {/* Buttons */}
           <HStack space={5} m={2} justifyContent={'center'}>
             <Button
               _text={{color: '#364b5b', fontSize: 12, fontWeight: 'bold'}}
@@ -202,13 +175,14 @@ const Wishlist = ({navigation}) => {
               Add to Cart
             </Button>
          </HStack>
+
         </View>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
     <Navbar props={AppBarContent} />
     <ScrollView
       contentContainerStyle={styles.TopContainer}
@@ -233,7 +207,7 @@ const Wishlist = ({navigation}) => {
       }
 
     </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -252,7 +226,6 @@ const styles = StyleSheet.create({
     // flexShrink: 1,
     // flexBasis: 1,
     paddingBottom: 70,
-    marginTop: 20,
   },
   CourseCard: {
     alignItems: 'center',

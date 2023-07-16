@@ -1,24 +1,26 @@
 /* eslint-disable react-native/no-inline-styles */
 import {View, StyleSheet, Dimensions, TouchableOpacity} from 'react-native';
 import React, {useEffect, useState} from 'react';
-import {HStack, VStack, Image, Center, Text, Progress} from 'native-base';
+import {HStack, VStack, Image, Center, Text, Progress} from 'native-base'
+import { Rating, AirbnbRating } from 'react-native-ratings'
 
 const {width, height} = Dimensions.get('window');
 const CourseCard = ({props}) => {
   const [courseTitle, setCourseTitle] = useState();
   const [currencyType, setCurrencyType] = useState();
+  const [rating, setRating] = useState(props.rating)
 
   const data = props;
   console.log(props)
 
   useEffect(() => {
     let cName = data.courseName;
-    let courseT = cName.slice(0,25);
-    if (cName.length > 25){
-      setCourseTitle(courseT + '...');
-    } else {
+    // let courseT = cName.slice(0,25);
+    // if (cName.length > 25){
+    //   setCourseTitle(courseT + '...');
+    // } else {
       setCourseTitle(cName);
-    }
+    // }
 
     // console.log(props);
 
@@ -87,7 +89,20 @@ const CourseCard = ({props}) => {
 
           <HStack alignItems={'center'} justifyContent={'space-between'}>
             <HStack space={2} alignItems={'center'}>
-              <HStack space={1}>
+            <AirbnbRating
+              count={5}
+              isDisabled={true}
+              showRating={false}
+              defaultRating={`${rating}`}
+              size={10}
+              // selectedColor={colors[2]}
+              value={`${rating}`}
+              // style={{marginHorizontal:4}}
+              // ratingContainerStyle={{ marginHorizontal:10, marginTop:20, }}
+              // starContainerStyle={{paddingVertical:10,}}     
+              // onFinishRating={ratingCompleted}
+            />
+              {/* <HStack space={1}>
                    {
                     [...Array(props.rating)].map((e, i) =>{
                         return (
@@ -114,13 +129,17 @@ const CourseCard = ({props}) => {
                       }
                     )
                   }
-              </HStack>
+              </HStack> */}
+              {
+                props.rating >= 0 ? 
+                <Text
+                  style={{fontSize: 10, fontWeight: '600'}}
+                  color={'greyScale.800'}>
+                  {props.rating.toFixed(1)} ({props.ratingCount})
+                </Text>
+                : null
+              }
 
-              <Text
-                style={{fontSize: 10, fontWeight: '600'}}
-                color={'greyScale.800'}>
-                {props.rating}
-              </Text>
 
               <HStack space={1} alignItems={'center'}>
                 <Image
@@ -154,16 +173,20 @@ const CourseCard = ({props}) => {
           </HStack>
         : 
           <View style={{flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-            {/* {Number.isInteger(cartA.taxValue) ? cartA.taxValue : cartA.taxValue.toFixed(2)} */}
-            <Text style={{marginRight:10, fontSize: 10, fontWeight: '600'}}>{Number.isInteger(data.courseProgressPercentage) ? data.courseProgressPercentage : data.courseProgressPercentage.toFixed(2)}%</Text>
+            {
+              data.courseProgressPercentage ?
+              <Text style={{marginRight:10, fontSize: 10, fontWeight: '600'}}>{Number.isInteger(data.courseProgressPercentage) ? data.courseProgressPercentage : data.courseProgressPercentage.toFixed(2)}%</Text>
+              : 
+              <Text style={{marginRight:10, fontSize: 10, fontWeight: '600'}}>0%</Text>
+            }
             <Progress
-            size={'xs'}
-            style={{width:width*0.5}}
-            mb={1}
-            mt={1}
-            value={data.courseProgressPercentage}
-            color={'primary.100'}
-          />
+              size={'xs'}
+              style={{width:width*0.5}}
+              mb={1}
+              mt={1}
+              value={data.courseProgressPercentage}
+              color={'primary.100'}
+            />
           </View>
           }
          

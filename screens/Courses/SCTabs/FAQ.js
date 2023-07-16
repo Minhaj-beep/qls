@@ -35,7 +35,7 @@ const FAQ = () => {
     try {
       let response = await GetFAQ(mail, code);
       if (response.status === 200) {
-        console.log('FAQ retrieved successfully');
+        // console.log('FAQ retrieved successfully');
         let data = response.data;
         if (data.length !== 0) {
           let faq = data[0].faqList;

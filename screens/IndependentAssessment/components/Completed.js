@@ -38,7 +38,7 @@ const Completed = ({props}) => {
                                 <HStack maxWidth={width*0.5} alignItems="center" space={2}>
                                     <Text noOfLines={2} style={{ fontSize: 14, fontWeight: 'bold', color: '#395061'}}>{data.assessmentTitle}</Text>
                                     {
-                                        data.assessmentPercentage < 100 ?
+                                        data.assessmentPercentage < 80 ?
                                         <Text noOfLines={2} style={{ fontSize: 9, backgroundColor:"#F65656", paddingHorizontal:5, borderRadius:10, color: '#ffffff'}}>Failed</Text>
                                         :
                                         <Text noOfLines={2} style={{ fontSize: 9, backgroundColor:"#29D363", paddingHorizontal:5, borderRadius:10, color: '#ffffff'}}>Passed</Text>
@@ -49,13 +49,13 @@ const Completed = ({props}) => {
                                         <Text style={{fontSize: 10, fontWeight: '600'}} color={'greyScale.800'}>By :</Text>
                                         <Text style={{fontSize: 11, fontWeight: '600'}} color={'#395061'}>{data.instructorName}</Text>
                                         <Text ml={3} style={{fontSize: 11, fontWeight: '600'}} color={'greyScale.800'}>Received Grade</Text>
-                                        <Text style={{fontSize: 11, fontWeight: '600'}} color={'#395061'}>{data.assessmentPercentage}%</Text>
+                                        <Text style={{fontSize: 11, fontWeight: '600'}} color={'#395061'}>{parseInt(data.assessmentPercentage) === data.assessmentPercentage ? data.assessmentPercentage : data.assessmentPercentage.toFixed(2)}%</Text>
                                     </HStack>
                                 </HStack>
                             </VStack>
                             <VStack mr={0} justifyContent={"center"} alignItems={'center'}>
                                 {
-                                    data.assessmentPercentage < 100 ?
+                                    data.assessmentPercentage < 80 ?
                                     <Text onPress={()=>{viewAssessment(data.assessmentCode, data.assessmentPercentage)}} noOfLines={1} mt={1} style={{ fontSize: 12, padding:2, fontWeight: 'bold', color: '#395061', maxWidth: width * 0.75,}}>Retry</Text>
                                     :
                                     <Text onPress={()=>{viewAssessment(data.assessmentCode, data.assessmentPercentage)}} noOfLines={1} mt={1} style={{ fontSize: 12, padding:2, fontWeight: 'bold', color: '#395061', maxWidth: width * 0.75,}}>View</Text>

@@ -2,7 +2,7 @@ import React from 'react';
 import axios from 'axios';
 
 export const FetchPost = async (header, body, API) => {
-  const BaseURL = 'https://api.dev.qlearning.academy/';
+  const BaseURL = 'https://api-uat.qlearning.academy/';
   const API_URL = BaseURL + API;
 
   const requestOptions = {
@@ -44,7 +44,7 @@ export const FetchPost = async (header, body, API) => {
 };
 
 export const FetchGet = (header, body) => {
-  const API = 'https://api.dev.qlearning.academy/';
+  const API = 'https://api-uat.qlearning.academy/';
 
   const requestOptions = {
     method: 'GET',

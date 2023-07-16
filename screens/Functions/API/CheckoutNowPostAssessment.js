@@ -17,7 +17,7 @@ const CheckoutNowPostAssessment = async (email, courseCode) => {
     body: JSON.stringify({ assessmentCode: courseCode })
   };
   const response = await fetch(
-    BaseURL + `/api/v1/payment/checkout-now`,
+    BaseURL + `api/v1/payment/checkout-now`,
     requestOptions,
   )
   // .then(res=>console.log(res.status))

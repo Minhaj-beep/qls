@@ -17,7 +17,7 @@ const GetLiveClass = async (email, code) => {
   };
   // console.log(requestOptions);
   const response = await fetch(
-    BaseURL + '/getAllLiveClassByCourseCode?courseCode=' + code,
+    BaseURL + 'getAllLiveClassByCourseCode?courseCode=' + code,
     requestOptions,
   );
 //   console.log(response);

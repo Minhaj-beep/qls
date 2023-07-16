@@ -37,13 +37,14 @@ import {
   MobileVal,
   TextVal,
 } from '../Functions/Validations';
-import {setLoggedIn, setLoading, setMail} from '../Redux/Features/authSlice';
+import {setLoggedIn, setLoading, setIsLoggedInBefore, setProfileData, setMail} from '../Redux/Features/authSlice';
 import {DeactivateAccount} from '../Functions/API/DeactivateAccount';
 import {GetStudentByEmail} from '../Functions/API/GetStudentByEmail';
 import moment from 'moment';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import PhoneInput from 'react-native-phone-number-input'
 import auth from '@react-native-firebase/auth'
+import CountDownTimer from 'react-native-countdown-timer-hooks'
 
 const {width, height} = Dimensions.get('window');
 
@@ -53,6 +54,7 @@ const AccountSettings = ({navigation}) => {
   // console.log(JWT);
   const GUser = useSelector(state => state.Auth.GUser);
   const ProfileData = useSelector(state => state.Auth.ProfileData)
+  const IsLoggedInWithMobile = useSelector(state => state.Auth.IsLoggedInWithMobile)
   const [phNo, setPhNo] = useState(null)
   const [newPhNo, setNewPhNo] = useState('')
   const [errNewPhNo, setErrNewPhNo] = useState(false)
@@ -119,7 +121,7 @@ const AccountSettings = ({navigation}) => {
   useEffect(()=>{
     CheckDeactivate();
 
-    if(ProfileData.mobileNumber.match(/\W/)){
+    if(ProfileData.hasOwnProperty('mobileNumber') && ProfileData.mobileNumber.match(/\W/)){
       const splitted = ProfileData.mobileNumber.split("+")
       setPhNo(splitted[1])
       setCountryCode(splitted[0])
@@ -142,7 +144,7 @@ const AccountSettings = ({navigation}) => {
       if ( response.status === 200){
         let UserInfo = response.data;
         setDeactivated(UserInfo.deactivateReqRaised);
-        let CompletionDate = moment(UserInfo.deactivateCompletionDate).format('DD MMM YYYY, hh:mm a');
+        let CompletionDate = moment(UserInfo.deactivateCompletionDate).format('DD/MM/YYYY, hh:mm a');
         setRemaingDay(CompletionDate);
       } else {
         alert("Error CheckDeactivate: " + response.message);
@@ -236,6 +238,7 @@ const AccountSettings = ({navigation}) => {
   const LogOut = () => {
     dispatch(setLoading(true));
     dispatch(setLoggedIn(false));
+    dispatch(setIsLoggedInBefore(true));
     ClearLocalStorage();
     GSignOut();
     dispatch(setLoading(false));
@@ -521,39 +524,60 @@ const AccountSettings = ({navigation}) => {
   };
 
   const verifyOtp = async () => {
-    let result = {}
-    try {
-      const credential = auth.PhoneAuthProvider.credential(
-        verificationId,
-        otp
-      );
-      result = await auth().signInWithCredential(credential);
-      console.log(result)
-    } catch (error) {
-      console.log('Error verifying OTP:', error);
-    }
-    if(Object.keys(result).length > 0){
+    if(Object.keys(otp).length > 0){
+      let result = {}
+      try {
+        const credential = auth.PhoneAuthProvider.credential(
+          verificationId,
+          otp
+        );
+        result = await auth().signInWithCredential(credential);
+        console.log(result)
+        if (result && result.user) {
+          console.log("OTP verification successful");
+          // Perform actions for correct OTP
+          ChangePhoneNumber();
+        } else {
+          alert("Wrong OTP entered");
+          // Perform actions for wrong OTP
+        }
+      } catch (error) {
+        alert(error);
+      }
       // alert('Done')
-      ChangePhoneNumber()
     } else {
       alert('Please insert the OTP correctly and try again!')
     }
   };
 
+  function getLastTenCharacters(str) {
+    if (typeof str !== 'string') {
+      return 'Invalid input. Please provide a string.';
+    }
+  
+    if (str.length <= 10) {
+      return str;
+    }
+  
+    return str.slice(-10);
+  }
+
 
   const ChangePhoneNumber = async () => {
+    let oldNumber = '+91' + getLastTenCharacters(phNo)
+    let newNumber = '+91' + getLastTenCharacters(newPhNo)
+    console.log(phNo, newPhNo, getLastTenCharacters(phNo), getLastTenCharacters(newPhNo))
     dispatch(setLoading(true));
       const requestOptions = {
         method: 'POST',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          token: CEmail,
-          gmailusertype: 'STUDENT',
+          'x-auth-token': JWT
         },
         body: JSON.stringify({
-          oldMobileNumber: phNo,
-          newMobileNumber: newPhNo,
+          oldMobileNumber: oldNumber,
+          newMobileNumber: newNumber,
         }),
       };
       await fetch(BaseURL + 'changeMobileNumber', requestOptions)
@@ -561,12 +585,10 @@ const AccountSettings = ({navigation}) => {
         .then(result => {
           if (result.status === 200) {
             setShowCP(false);
-            // setTime(60);
-            // timerRef.current = 60;
-            // setOTPTimer();
             setConfirmChangePhNo(false)
             setSuccessCP(true);
             dispatch(setLoading(false));
+            GetProfileD(OEmail)
             console.log(result);
           } else if (result.status > 200) {
             dispatch(setLoading(false));
@@ -583,6 +605,38 @@ const AccountSettings = ({navigation}) => {
     dispatch(setLoading(false));
   };
 
+  const GetProfileD = async email => {
+    if (email === '') {
+      alert('Something is wrong, please login again');
+    } else {
+      const requestOptions = {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          gmailUserType: 'STUDENT',
+          token: email,
+        },
+      };
+      await fetch(BaseURL + 'getStudentByEmail?email=' + email, requestOptions)
+        .then(response => response.json())
+        .then(result => {
+          if (result.status === 200) {
+            console.log('This is updated profile data, ', result)
+            dispatch(setProfileData(result.data));
+            dispatch(setLoading(false));
+          } else if (result.status > 200) {
+            dispatch(setLoading(false));
+            alert('GetProfileD error : 1' + result.message);
+          }
+        })
+        .catch(error => {
+          dispatch(setLoading(false));
+          console.log('GetProfileD error : 2' + error);
+        });
+    }
+  };
+
   const submitPhNo = () => {
     if(newPhNo !== null && newPhNo.length === 10){
       if(phNo === newPhNo){
@@ -590,11 +644,21 @@ const AccountSettings = ({navigation}) => {
       } else {
         sendOtp('+91'+newPhNo)
         setConfirmChangePhNo(true)
+        setVerifyAuth(false)
         setChangePhNo(false)
       }
     } else {
         mobileNumberRef.current.focus()
+        setErrNewPhNo(true)
     }
+  }
+
+  function waitToCloseDropdown() {
+    console.log(VerifyAuth, 'This is verify auth')
+    setTimeout(function() {
+      setVerifyAuth(false)
+      submitPhNo();
+    }, 100);
   }
 
   return (
@@ -893,21 +957,26 @@ const AccountSettings = ({navigation}) => {
 
                 <HStack style={styles.otpcount} space={2}>
                   <View style={styles.count}>
-                    <Text style={{fontSize: 12, color: '#3e5160'}}>
-                      00 : {time}
-                    </Text>
+                  <CountDownTimer
+                    timestamp={60}
+                    timerCallback={()=>{
+                      setresend(false)
+                      setVerifyAuth(true)
+                    }}
+                    containerStyle={{backgroundColor: 'White', borderWidth: 0,  height: 20}}
+                    textStyle={{color: '#3e5160', fontSize: 12}}
+                  />
                   </View>
                   <View style={styles.resendbtn}>
                     <TouchableOpacity
                       onPress={() => {
-                        setVerifyEC(false);
-                        setVerifyAuth(false);
-                        ChangeEmail();
+                        setConfirmChangePhNo(false);
+                        waitToCloseDropdown()
                       }}
                       disabled={resend}>
-                      <Text
+                      <Text bottom={1}
                         style={
-                          resend === true
+                          !VerifyAuth
                             ? styles.resendtext
                             : styles.resendtextActive
                         }
@@ -922,7 +991,7 @@ const AccountSettings = ({navigation}) => {
                 <Button
                   bg="#3e5160"
                   colorScheme="blueGray"
-                  style={[styles.Verifybtn, {opacity: resend ? 1 : 0.7}]}
+                  style={[styles.Verifybtn, {opacity: VerifyAuth ? 0.7 : 1}]}
                   _pressed={{bg: '#fcfcfc', _text: {color: '#3e5160'}}}
                   onPress={() => verifyOtp()}
                   disabled={VerifyAuth}>
@@ -971,7 +1040,10 @@ const AccountSettings = ({navigation}) => {
                     paddingRight: 40,
                   }}
                   _pressed={{bg: '#fcfcfc', _text: {color: '#3e5160'}}}
-                  onPress={() => setSuccessEC(false)}>
+                  onPress={() => {
+                    setSuccessEC(false)
+                    navigation.replace('AccountSettings')
+                  }}>
                   Done
                 </Button>
 
@@ -1393,7 +1465,7 @@ const AccountSettings = ({navigation}) => {
                   alt="successful"
                 />
 
-                <Text fontWeight="bold" fontSize="17" width={width / 3.5}>
+                <Text fontWeight="bold" fontSize="17" textAlign={'center'}>
                   Account Successfully Deleted! If you wish to Re-activate, please raise a ticket in the Help & support!
                 </Text>
 
@@ -1422,7 +1494,7 @@ const AccountSettings = ({navigation}) => {
 
         <VStack pl={4} pr={4} pt={8}>
           <VStack space={10}>
-            {GUser === false ? (
+            {GUser === false && IsLoggedInWithMobile === false ? (
               <VStack space={10}>
                 <HStack justifyContent="space-between" alignItems="center">
                   <HStack
@@ -1493,7 +1565,8 @@ const AccountSettings = ({navigation}) => {
               </VStack>
             ) : null}
 
-            <HStack justifyContent="space-between" alignItems="center">
+            {
+              phNo && <HStack justifyContent="space-between" alignItems="center">
               <HStack
                 justifyContent="space-between"
                 alignItems="center"
@@ -1513,7 +1586,7 @@ const AccountSettings = ({navigation}) => {
                     fontWeight="500"
                     color="#8C8C8C"
                     style={{maxWidth: width / 2.5}}>
-                    {countryCode + '' + phNo}
+                    {countryCode + '+' + phNo}
                   </Text>
                   }
                 </VStack>
@@ -1528,6 +1601,7 @@ const AccountSettings = ({navigation}) => {
                 Change
               </Button>
             </HStack>
+            }
             <HStack justifyContent="space-between" alignItems="center">
               <HStack
                 justifyContent="space-between"
@@ -1578,9 +1652,9 @@ const AccountSettings = ({navigation}) => {
                   </Text>
                   <Text
                     fontWeight="500"
-                    color="#8C8C8C"
+                    color="red.500"
                     style={{maxWidth: width / 2.5}}>
-                  {Deactivated ?  'your account Will be deactivated by ' + RemaingDay : 'Permanently.'}
+                  {Deactivated ?  'Deactivating on ' + RemaingDay : 'Permanently.'}
                   </Text>
                 </VStack>
               </HStack>

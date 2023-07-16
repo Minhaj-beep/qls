@@ -13,7 +13,7 @@ const getAllIndependentAssessments = async (email) => {
           token: email,
         },
     };
-    const response = await fetch(BaseURL + 'getAllActivatedAssessment', requestOptions)
+    const response = await fetch(BaseURL + 'searchIndependentAssessment?', requestOptions)
     return response.json();
 }
 

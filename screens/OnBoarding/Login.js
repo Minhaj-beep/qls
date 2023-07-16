@@ -1,18 +1,19 @@
 import { StyleSheet, View, SafeAreaView, ScrollView, Dimensions, TouchableOpacity,} from 'react-native';
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import { Center, Text, Box, VStack, HStack, Input, FormControl, Divider, Button, Link, Heading, Image, Modal, IconButton,} from 'native-base';
 import Icon from 'react-native-vector-icons/Ionicons';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import { PassVal, EmailVal, OtpVal, MobileVal, TextVal,} from '../Functions/Validations';
 import {BaseURL} from '../StaticData/Variables';
 import {useDispatch, useSelector} from 'react-redux';
-import { setMail, setProfileData, setJWT, setLoggedIn, setGUser, setUserData, setLoading,} from '../Redux/Features/authSlice';
+import { setMail, setProfileData, setJWT, setLoggedIn, setGUser, setUserData, setLoading, setUser_ID, setTempName, setIsLoggedInWithMobile,} from '../Redux/Features/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin, GoogleSigninButton, statusCodes,} from '@react-native-google-signin/google-signin'
 import { GetAccountDetailsbyMobileNum } from '../Functions/API/GetAccountDetailsbyMobileNum';
 import PhoneInput from 'react-native-phone-number-input'
 import { LoginWithMobileNum } from '../Functions/API/LoginWithMobileNum';
+import PushNotification from 'react-native-push-notification';
 
 const {width, height} = Dimensions.get('window');
 
@@ -92,8 +93,14 @@ const Login = ({navigation}) => {
       await fetch(BaseURL + 'login', requestOptions)
         .then(response => response.json())
         .then(result => {
+          console.log(result, 'Result to handle google user')
           if (result.status === 200) {
             EUSavelocal('Email', JSON.stringify(Gmail));
+            EUSavelocal('GUser', JSON.stringify(true));
+            EUSavelocal('User_ID', JSON.stringify(result.data.userId));
+            EUSavelocal('TempName', JSON.stringify(result.data.name));
+            dispatch(setUser_ID(result.data.userId));
+            dispatch(setTempName(result.data.name));
             dispatch(setGUser(true));
             dispatch(setMail(Gmail));
             dispatch(setLoggedIn(true));
@@ -155,6 +162,54 @@ const Login = ({navigation}) => {
   const [selectMobileAccount, setSelectMobileAccount] = useState(false)
   // const [mobileAccount, setMobileAccount] = useState({})
   const [mobileAccounts, setMobileAccounts] = useState([])
+  const [seconds, setSeconds] = useState(0)
+
+  useEffect(() => {
+    if (parseInt(seconds) === 0) {
+      setresend(false)
+      return;
+    }
+
+    if(seconds > 0){
+      setresend(true)
+    }
+    let intervalId
+    // console.log(String(seconds).length)
+
+    if(String(parseInt(seconds)).length < 2 || parseInt(seconds)-1 === 9){
+      intervalId = setInterval(() => {
+        setSeconds((prevSeconds) => '0' + (parseInt(prevSeconds) - 1));
+      }, 1000);
+    } else {
+      intervalId = setInterval(() => {
+        setSeconds((prevSeconds) => prevSeconds - 1);
+      }, 1000);
+    }
+
+    
+
+    return () => clearInterval(intervalId);
+  }, [seconds]);
+
+  useEffect(()=>{
+    PushNotification.configure({
+      onRegister: function (token) {
+        console.log("TOKEN:", token);
+      },
+  
+      onRegistrationError: function(err) {
+        console.error(err.message, err);
+      },
+  
+      permissions: {
+        alert: true,
+        badge: true,
+        sound: true,
+      },
+      popInitialNotification: true,
+      requestPermissions: true,
+    });
+  },[])
 
   const loginWithMobileNum = async(mobileAccount) => {
     try {
@@ -164,6 +219,10 @@ const Login = ({navigation}) => {
         dispatch(setGUser(false));
         dispatch(setJWT(response.data.JWT));
         dispatch(setMail(response.data.Email));
+        dispatch(setUser_ID(response.data.userId));
+        dispatch(setIsLoggedInWithMobile(true))
+        EUSavelocal('IsLoggedInWithMobile', JSON.stringify(true));
+        EUSavelocal('User_ID', JSON.stringify(response.data.userId));
         EUSavelocal('Email', JSON.stringify(response.data.Email));
         EUSavelocal('Name', JSON.stringify(response.data.Name));
         EUSavelocal('JWT', JSON.stringify(response.data.JWT))
@@ -205,6 +264,7 @@ const Login = ({navigation}) => {
         if(Object.keys(response.data).length > 0) {
           // Account exit, sending OTP to mobile no
           sendOtp(num)
+          setSeconds(60)
           setLoginWithNumOtp(true)
           setMobileAccounts(response.data)
         } else {
@@ -242,7 +302,7 @@ const Login = ({navigation}) => {
     } catch (error) {
       console.log('Error verifying OTP:', error);
     }
-    if(Object.keys(result).length > 0){
+    if(Object.keys(result).length > 0 && result.user){
       setLoginWithNumOtp(false)
       setSelectMobileAccount(true)
     } else {
@@ -359,18 +419,20 @@ const Login = ({navigation}) => {
       await fetch(BaseURL + 'login', requestOptions)
         .then(response => response.json())
         .then(result => {
-          console.log(result);
+          console.log(result, '______________________Loggedin with credentials______________');
           dispatch(setLoading(false));
           if (result.status === 200) {
             dispatch(setGUser(false));
             dispatch(setJWT(result.data.JWT));
             dispatch(setMail(result.data.Email));
+            dispatch(setUser_ID(result.data.userId));
 
             // getProfile(result.data.Email)
             // getCourseCodes(result.data.JWT)
 
             EUSavelocal('Email', JSON.stringify(result.data.Email));
             EUSavelocal('JWT', JSON.stringify(result.data.JWT));
+            EUSavelocal('User_ID', JSON.stringify(result.data.userId));
 
             dispatch(setLoggedIn(true));
           } else if (result.status > 200) {
@@ -529,6 +591,20 @@ const Login = ({navigation}) => {
                       </Text>
                     ) : null}
 
+                    <HStack style={styles.otpcount} alignItems={'center'} space={2} mt={2}>
+                      <View style={styles.count}>
+                        <Text style={{fontSize: 12, color: '#3e5160'}}>
+                          00 : {seconds}
+                        </Text>
+                      </View>
+                      <Button bg={'transparent'} _pressed={{bg: "transparent"}} isDisabled={resend} padding={0} onPress={()=>{
+                        setSeconds(60)
+                        sendOtp('+91' + phNo)
+                      }}>
+                        <Text disabled={resend} color={'primary.50'} style={styles.resendtext}>Resend</Text>
+                      </Button>
+                    </HStack>
+
                     <TouchableOpacity>
                       <Button
                         bg="#3e5160"
@@ -563,7 +639,7 @@ const Login = ({navigation}) => {
                         defaultCode={`${countryCode}`}
                         layout="first"
                         textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
-                        codeTextStyle={{height:"150%",}}
+                        codeTextStyle={{flex:1, height:"150%", alignSelf:"flex-start", backgroundColor:"#f3f3f3"}}
                         containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
                         onChangeCountry={(country)=>{
                           setCountryCode(country.cca2)
@@ -574,8 +650,8 @@ const Login = ({navigation}) => {
                           }
                         }}
                       />
-                      <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
-                        <View style={{width:"40%",  marginLeft:'60%'}}>
+                      <View style={{width:"100%", height:"100%", flexDirection:"row", position:"absolute"}}>
+                        <View style={{width:"40%", height:'100%',  marginLeft:'60%'}}>
                           <Input 
                           variant="filled" 
                           width={"100%"}
@@ -591,7 +667,7 @@ const Login = ({navigation}) => {
                           borderRadius={5}
                           keyboardType="numeric" 
                           p={2}
-                          style={{justifyContent:"flex-end"}}
+                          style={{justifyContent:"flex-end",height:"100%"}}
                           />
                         </View>
                       </View>

@@ -20,9 +20,9 @@ import {
 } from 'native-base';
 import Navbar from '../components/Navbar';
 import {useSelector, useDispatch} from 'react-redux';
-import MIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import CourseCard from '../components/Courses/RCCard';
 import {setSCData} from '../Redux/Features/CourseSlice';
+import { AirbnbRating } from 'react-native-ratings';
 
 const {width, height} = Dimensions.get('window');
 
@@ -86,8 +86,9 @@ const InstructorProfile = ({navigation}) => {
       await Linking.openURL(url);
     }
   };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Navbar props={AppBarContent} />
       <ScrollView
         contentContainerStyle={styles.TopContainer}
@@ -111,6 +112,22 @@ const InstructorProfile = ({navigation}) => {
           <Text color={'#000'} fontSize={16} fontWeight={'bold'}>
             {InstructorName}
           </Text>
+          <HStack space={1}>
+            <AirbnbRating
+              count={5}
+              isDisabled={true}
+              showRating={false}
+              defaultRating={`${Instructor.rating}`}
+              size={15}
+              value={`${Instructor.rating}`}
+            />
+            {
+              !Number.isInteger(Instructor.ratingCount) ?
+              <Text style={{fontSize: 14, color: '#364b5b'}}>{Instructor.rating.toFixed(1)} ({Instructor.ratingCount})</Text>
+              :
+              <Text style={{fontSize: 14, color: '#364b5b'}}>{Instructor.rating} ({Instructor.ratingCount})</Text>
+            }
+          </HStack>
 
           <HStack space={2}>
             <VStack alignItems={'center'} space={1}>
@@ -314,9 +331,7 @@ const InstructorProfile = ({navigation}) => {
           </View>
 
           <View>
-            <Text color={'#091B12'} fontSize={16} fontWeight={'bold'} mb={1}>
-              Courses ({ICourses.totalCourses > 0 ? ICourses.totalCourses : '0'})
-            </Text>
+            {ICourses ? <Text color={'#091B12'} fontSize={16} fontWeight={'bold'} mb={1}>Courses ({ICourses.totalCourses > 0 ? ICourses.totalCourses : '0'})</Text> : null }
             {ICourses ? (
               <VStack space={1}>
                 {console.log(ICourses, 'is it this')}
@@ -327,7 +342,7 @@ const InstructorProfile = ({navigation}) => {
                       onPress={() => {
                         const DD = {CDD: data, type: 'Instructor'};
                         dispatch(setSCData(DD));
-                        navigation.navigate('SCView');
+                        navigation.navigate('ViewLiveCourse');
                       }}>
                       <CourseCard props={data} />
                     </TouchableOpacity>
@@ -349,7 +364,7 @@ const InstructorProfile = ({navigation}) => {
           </View>
         </VStack>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
