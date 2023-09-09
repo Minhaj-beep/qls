@@ -8,6 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import { setLiveObjForToday } from "../../Redux/Features/CourseSlice";
 import { GetLiveClass } from "../../Functions/API/GetLiveClass";
 import { useIsFocused } from '@react-navigation/native';
+import moment from "moment";
 
 const {width, height} = Dimensions.get('window')
 
@@ -75,8 +76,8 @@ const RenderRecordedLiveClasses = ({props, isPurchase, courseCode}) => {
         const remainingTime = Date.parse(data.date) - Date.now();
         const sec = Math.floor((remainingTime) / 1000)
         const utcDate = new Date(data.date)
-        const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
-        const istDateTime = utcDate.toLocaleString('en-US', istOptions);
+        // const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+        const istDateTime = moment.utc(utcDate).local().format('ddd, MMM D YYYY, h:mm A');
     
         let now = new Date()
         const startDate = new Date(data.date)

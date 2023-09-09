@@ -857,8 +857,8 @@ import {
       const remainingTime = Date.parse(data.date) - Date.now();
       const sec = Math.floor((remainingTime) / 1000)
       const utcDate = new Date(data.date)
-      const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
-      const istDateTime = utcDate.toLocaleString('en-US', istOptions);
+      // const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+      const istDateTime = moment.utc(utcDate).local().format('ddd, MMM D YYYY, h:mm A');
   
       let now = new Date()
       const startDate = new Date(data.date)
@@ -972,7 +972,7 @@ import {
     }
   
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <Navbar props={AppBarContent} />
         {stateLoading || !isComponentLoaded ? <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>Loading ...</Text>
           :
@@ -1390,7 +1390,7 @@ import {
           ) : null}
         </ScrollView>
         }
-      </SafeAreaView>
+      </View>
     );
   };
   

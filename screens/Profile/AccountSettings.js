@@ -663,7 +663,7 @@ const AccountSettings = ({navigation}) => {
 
   return (
     <ScrollView style={styles.topContainer}>
-      <SafeAreaView>
+      <View>
         <Navbar props={AppBarContent} />
 {/* Change email popup */}
         <Modal isOpen={showCE} onClose={() => setShowCE(false)} size="lg">
@@ -1676,7 +1676,7 @@ const AccountSettings = ({navigation}) => {
             </HStack>
           </VStack>
         </VStack>
-      </SafeAreaView>
+      </View>
     </ScrollView>
   );
 };

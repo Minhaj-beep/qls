@@ -979,7 +979,7 @@ const AddTC = async () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Navbar props={AppBarContent} />
       {stateLoading || !isComponentLoaded ? <Text color={'greyScale.800'} fontSize={12} alignSelf={'center'} mt={2}>Loading ...</Text>
         :
@@ -1397,7 +1397,7 @@ const AddTC = async () => {
         ) : null}
       </ScrollView>
       }
-    </SafeAreaView>
+    </View>
   );
 };
 

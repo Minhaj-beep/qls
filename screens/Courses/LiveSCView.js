@@ -361,7 +361,7 @@ import {
     };
 
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <Navbar props={AppBarContent} />
         <ScrollView
           contentContainerStyle={styles.TopContainer}
@@ -659,7 +659,7 @@ import {
             </VStack>
           ) : null}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   };
 

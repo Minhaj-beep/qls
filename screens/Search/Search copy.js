@@ -429,7 +429,7 @@ const Search = ({navigation}) => {
   const {isOpen, onOpen, onClose} = useDisclose();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* <StatusBar animated={true} backgroundColor="#FCFCFC"/> */}
       <Navbar props={AppBarContent} />
       <ScrollView
@@ -750,7 +750,7 @@ const Search = ({navigation}) => {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

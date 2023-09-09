@@ -50,7 +50,7 @@ const RenderCarousel = items => {
   };
 
   return (
-    <View>
+    <View >
       <HStack justifyContent="space-between" alignItems="center" mb={3} ml={4} mr={4}>
         <Text style={{color: '#000000', fontSize: 16, fontWeight: 'bold'}}>{title}</Text>
         <TouchableOpacity onPress={() => {
@@ -63,10 +63,11 @@ const RenderCarousel = items => {
         </TouchableOpacity>
       </HStack>
       <FlatList
+        style={{marginBottom:20}}
         renderItem={RenderC}
         data={Data}
         width={width}
-        height={width / 1.5}
+        // height={width / 1.5}
         horizontal={true}
         keyExtractor={(Data, index) => index}
         initialNumToRender={5}

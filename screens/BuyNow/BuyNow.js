@@ -428,6 +428,7 @@ const BuyNow = () => {
                         _text:{color: "#3e5160"}
                         }}
                         onPress={()=>{
+                          setShowSuccessPurchase(false)
                           setIsEmptyComponet(true)
                           course.courseCode ? navigation.navigate('Courses') : navigation.navigate('MyAssessments')
                         }}

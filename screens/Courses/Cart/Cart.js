@@ -519,7 +519,7 @@ const getRegions = (c) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Navbar props={AppBarContent} />
 
       {/* Modal to show successfull purchase */}
@@ -540,6 +540,7 @@ const getRegions = (c) => {
                   }}
                   onPress={()=>{
                     // setIsEmptyComponet(true)
+                    setShowSuccessPurchase(false)
                     setCartA({});
                     cartA.items.some(item => 'courseName' in item) ? navigation.navigate('Courses') : navigation.navigate('MyAssessments')
                     // course.courseCode ? navigation.navigate('Courses') : navigation.navigate('MyAssessments')
@@ -766,7 +767,7 @@ const getRegions = (c) => {
           </VStack>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

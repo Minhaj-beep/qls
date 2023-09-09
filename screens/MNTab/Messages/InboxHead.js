@@ -5,14 +5,15 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { Shadow } from 'react-native-shadow-2'
 import { TouchableOpacity } from 'react-native';
+import { getStatusBarHeight } from 'react-native-status-bar-height';
 
 export default InboxHead = ({props}) => {
     const navigation= useNavigation()
     return (
-        <View>
+        <View >
             <StatusBar translucent={true} />
             <Shadow style={{width:"100%", paddingBottom:3}} offset={[0, 0]} stretch={true} distance={20} paintInside={false}>
-                <View paddingY={2} style={{width:'95%', flexDirection:"row", alignItems:"center", marginTop:StatusBar.currentHeight}}>
+                <View paddingY={2} style={{width:'95%', flexDirection:"row", alignItems:"center", marginTop: getStatusBarHeight()}}>
                     <IconButton
                         onPress={() => navigation.goBack()}
                         style={{fontWeight:"bold"}}

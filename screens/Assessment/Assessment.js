@@ -17,7 +17,7 @@ const Assessments = ({navigation}) => {
 
   const AData = useSelector(state => state.Course.AssessmentData);
   const AssessmentData = AData.Data;
-  console.log(AData, 'Adata')
+  console.log(AData, 'Adata=====================')
   const [IsCompleted, setIsCompleted] = useState(AssessmentData.isCompleted);
   const [IsAssessmentPass,setIsAssessmentPass] = useState(false);
   const [SResult, setSResult] = useState(false);
@@ -56,7 +56,7 @@ const Assessments = ({navigation}) => {
       const Answers = [];
       AnswerMap.forEach((data, index)=>{
         let ans = {
-          'assessmentOrder':index,
+          'assessmentOrder':index.toString(),
           'answer':data,
         };
         Answers.push(ans);
@@ -69,11 +69,15 @@ const Assessments = ({navigation}) => {
       })
       console.log('Array 111111111: ', arr1)
       console.log('Array 22222222: ', Answers)
-      let body = {
+      let body = AData.Type == 'Live' ? {
+        'assessmentCode': AssessmentData.assessmentCode,
+        'answers':Answers,
+      } : {
         'chapterOrder': AData.chapterOrder,
         'lessonOrder':AssessmentData.lessonOrder,
-        'answers':arr1,
+        'answers':Answers,
       };
+      console.log('Body==========> ', body)
       try {
         let response = await AttendAssessment(email, CourseData.courseCode, body);
         if (response.status === 200 ){
@@ -126,7 +130,9 @@ const Assessments = ({navigation}) => {
 
   const TryAssessmentAgain = async() => {
     dispatch(setLoading(true));
-    let body = {
+    let body = AData.Type == 'Live' ? {
+      assessmentCode: AssessmentData.assessmentCode
+    } : {
       'chapterOrder': AData.chapterOrder,
       'lessonOrder':AssessmentData.lessonOrder,
     };
@@ -202,7 +208,7 @@ const Assessments = ({navigation}) => {
 
           </View>
         </HStack>
-        <Text fontSize={12} color={'greyScale.800'}>Answer: {props.assessmentAnswer}</Text>
+        {/* <Text fontSize={12} color={'greyScale.800'}>Answer: {props.assessmentAnswer}</Text> */}
       <HStack space={6} m={2} justifyContent="space-between">
         <View>
           <Radio.Group isDisabled size="sm" name="Radio01" colorScheme={'primary'} defaultValue={Choice.indexOf(props.givenAssessmentAnswer)} onChange={(value)=>{
@@ -249,7 +255,7 @@ const Assessments = ({navigation}) => {
 
   
   return (
-    <SafeAreaView>
+    <View>
       <Navbar props={AppBarContent} />
       <VStack>
         <ScrollView style={styles.container}>
@@ -318,7 +324,7 @@ const Assessments = ({navigation}) => {
           Submit
         </Button>
       </VStack>
-    </SafeAreaView>
+    </View>
   );
 };
 

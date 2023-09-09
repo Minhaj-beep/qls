@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View,   } from 'react-native';
 import { Text } from 'native-base';
 import io from 'socket.io-client';
-import { RTCPeerConnection, RTCView, mediaDevices } from 'react-native-webrtc';
+// import { RTCPeerConnection, RTCView, mediaDevices } from 'react-native-webrtc';
 import Peer from 'peerjs';
 import {useDispatch,useSelector} from 'react-redux';
 import WebView from 'react-native-webview';

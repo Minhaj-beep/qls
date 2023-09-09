@@ -404,7 +404,7 @@ const IndependentAssessment = () => {
                 </Actionsheet.Content>
                 </Actionsheet>
 
-                <HStack justifyContent={'space-between'}>
+                <HStack width={'100%'} justifyContent={'space-between'}>
                     <IconButton icon={<Ionicons name={'filter-outline'} size={15} color="#364b5b" />}
                     onPress={() => {
                         onOpen(true)
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
       borderRadius: 5,
     },
     CardContent: {
-      minWidth: width / 1.7,
-      maxWidth:width*0.58
+      minWidth: width > 700  ? width*0.78 : width*0.53,
+      maxWidth:width*0.53
     },
   });

@@ -106,7 +106,7 @@ const ProfileDash = ({navigation}) => {
     dispatch(setLoading(false));
   };
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
         <Modal isOpen={SuccessLogout} onClose={() => setSuccessLogout(false)} size="lg">
           <Modal.Content maxWidth="700" borderRadius={20}>
             <Modal.CloseButton />
@@ -166,7 +166,7 @@ const ProfileDash = ({navigation}) => {
           </Button>
         </VStack>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

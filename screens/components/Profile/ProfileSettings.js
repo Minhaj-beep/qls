@@ -14,7 +14,7 @@ const ProfileSettings = props => {
       <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Profile</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('Profile')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -26,7 +26,7 @@ const ProfileSettings = props => {
         onPress={() => navigation.navigate('MyCourses')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>My courses</Text>
-          <IconButton
+          <IconButton  onPress={() => navigation.navigate('MyCourses')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -38,7 +38,7 @@ const ProfileSettings = props => {
         onPress={() => navigation.navigate('MyAssessments')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>My Assessments</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('MyAssessments')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -50,7 +50,7 @@ const ProfileSettings = props => {
         onPress={() => navigation.navigate('MyMessages')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Messages</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('MyMessages')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -62,7 +62,7 @@ const ProfileSettings = props => {
         onPress={() => navigation.navigate('NotificationsManagement')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Notification</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('NotificationsManagement')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -73,7 +73,7 @@ const ProfileSettings = props => {
       <TouchableOpacity onPress={() => navigation.navigate('AccountSettings')}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Account Settings</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('AccountSettings')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -103,7 +103,7 @@ const ProfileSettings = props => {
         }}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Payment History</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('PaymentHistory')}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }
@@ -115,7 +115,7 @@ const ProfileSettings = props => {
         onPress={() => navigation.navigate('Tabs', {screen: 'Home'})}>
         <HStack style={styles.ProfileSettings}>
           <Text style={styles.ProfileText}>Help & Support</Text>
-          <IconButton
+          <IconButton onPress={() => navigation.navigate('Tabs', {screen: 'Home'})}
             icon={
               <Icon size={20} name="chevron-forward-outline" color="#395061" />
             }

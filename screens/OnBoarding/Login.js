@@ -1,4 +1,4 @@
-import { StyleSheet, View, SafeAreaView, ScrollView, Dimensions, TouchableOpacity,} from 'react-native';
+import { StyleSheet, View, SafeAreaView, ScrollView, Dimensions, TouchableOpacity, Platform} from 'react-native';
 import React, {useState, useRef, useEffect} from 'react';
 import { Center, Text, Box, VStack, HStack, Input, FormControl, Divider, Button, Link, Heading, Image, Modal, IconButton,} from 'native-base';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -13,13 +13,12 @@ import { GoogleSignin, GoogleSigninButton, statusCodes,} from '@react-native-goo
 import { GetAccountDetailsbyMobileNum } from '../Functions/API/GetAccountDetailsbyMobileNum';
 import PhoneInput from 'react-native-phone-number-input'
 import { LoginWithMobileNum } from '../Functions/API/LoginWithMobileNum';
-import PushNotification from 'react-native-push-notification';
+// import PushNotification from 'react-native-push-notification';
 
 const {width, height} = Dimensions.get('window');
 
 GoogleSignin.configure({
-  webClientId:
-    '855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com',
+    webClientId: Platform.OS === 'ios' ? "855618612359-q1u13i3du97tru5mi6ca69dhp7o1fbqn.apps.googleusercontent.com" :  '855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com'
 });
 
 const Login = ({navigation}) => {
@@ -191,25 +190,25 @@ const Login = ({navigation}) => {
     return () => clearInterval(intervalId);
   }, [seconds]);
 
-  useEffect(()=>{
-    PushNotification.configure({
-      onRegister: function (token) {
-        console.log("TOKEN:", token);
-      },
+  // useEffect(()=>{
+  //   PushNotification.configure({
+  //     onRegister: function (token) {
+  //       console.log("TOKEN:", token);
+  //     },
   
-      onRegistrationError: function(err) {
-        console.error(err.message, err);
-      },
+  //     onRegistrationError: function(err) {
+  //       console.error(err.message, err);
+  //     },
   
-      permissions: {
-        alert: true,
-        badge: true,
-        sound: true,
-      },
-      popInitialNotification: true,
-      requestPermissions: true,
-    });
-  },[])
+  //     permissions: {
+  //       alert: true,
+  //       badge: true,
+  //       sound: true,
+  //     },
+  //     popInitialNotification: true,
+  //     requestPermissions: true,
+  //   });
+  // },[])
 
   const loginWithMobileNum = async(mobileAccount) => {
     try {
@@ -543,7 +542,7 @@ const Login = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView>
       <Modal isOpen={loginWithNumOtp} onClose={() => setLoginWithNumOtp(false)} size="lg">
         <Modal.Content maxWidth="600">
@@ -1024,7 +1023,7 @@ const Login = ({navigation}) => {
         </Modal>
 
         <Center w="100%">
-          <Box safeArea p="2" w="90%" maxW="350" py="10">
+          <Box safeArea p="2" w="90%" py="10">
             <Heading
               size="md"
               color="coolGray.800"
@@ -1186,7 +1185,7 @@ const Login = ({navigation}) => {
           </Box>
         </Center>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

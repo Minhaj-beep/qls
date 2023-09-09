@@ -115,7 +115,7 @@ const PaymentHistory = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Navbar props={AppBarContent} />
       <ScrollView
         contentContainerStyle={styles.TopContainer}
@@ -202,7 +202,7 @@ const PaymentHistory = ({navigation}) => {
           }
         </VStack>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

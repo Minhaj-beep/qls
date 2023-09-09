@@ -1,8 +1,9 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Image} from 'native-base';
+import {Image, Badge} from 'native-base';
 import {StyleSheet} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+
 
 import Home from '../Home';
 import Search from '../Search/Search';
@@ -141,12 +142,29 @@ const TabNavigator = () => {
           tabBarLabel: 'Wishlist',
           tabBarIcon: ({focused}) => {
             return (
+              <>
+              <Badge // bg="red.400"
+                  bg="primary.100"
+                  rounded="full"
+                  bottom={7}
+                  left={-12}
+                  position={'absolute'}
+                  zIndex={1}
+                  variant="solid"
+                  alignSelf="flex-end"
+                  _text={{
+                    fontSize: 7,
+                  }}>
+                  {7}
+                </Badge>
               <Image
                 resizeMode={'contain'}
                 source={focused ? Img15 : Img05}
                 alt="nav"
                 style={focused ? styles.NavImgActive : styles.NavImg}
               />
+              </>
+              
             );
           },
         }}

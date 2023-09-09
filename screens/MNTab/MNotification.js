@@ -71,7 +71,7 @@ const Courses = ({navigation}) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <AppBar props={AppBarContent} />
 
       {/* Buttons to get messages or notifications */}
@@ -82,7 +82,7 @@ const Courses = ({navigation}) => {
 
       {selected === 'Messages' ? <Messages /> : <Notifications />}
       
-    </SafeAreaView>
+    </View>
   );
 };
 

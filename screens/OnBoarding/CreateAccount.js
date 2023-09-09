@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  Platform
 } from 'react-native';
 import React, {useState, useRef, useEffect} from 'react';
 import {
@@ -53,7 +54,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import {phone} from 'phone';
-import PushNotification from 'react-native-push-notification';
+// import PushNotification from 'react-native-push-notification';
 
 const {width, height} = Dimensions.get('window');
 
@@ -61,8 +62,7 @@ const CreateAccount = ({navigation}) => {
   const dispatch = useDispatch();
 
   GoogleSignin.configure({
-    webClientId:
-      '855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com',
+    webClientId: Platform.OS === 'ios' ? "855618612359-q1u13i3du97tru5mi6ca69dhp7o1fbqn.apps.googleusercontent.com" :  '855618612359-gvf660jb4h9q42d0umjnpmj4va9s3moa.apps.googleusercontent.com'
   });
 
   const [PShow, setPShow] = useState(false);
@@ -194,14 +194,14 @@ const CreateAccount = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hadnleNotification = () => {
-    PushNotification.localNotification({
-      channelId:"test-channel",
-      title:"You have recived a local notification",
-      message:"Hooray! blaa blaa blaa blaa blaa bla  bla bla balaaaaa!"
-    })
-    console.log('Done: test-channel')
-  }
+  // const hadnleNotification = () => {
+  //   PushNotification.localNotification({
+  //     channelId:"test-channel",
+  //     title:"You have recived a local notification",
+  //     message:"Hooray! blaa blaa blaa blaa blaa bla  bla bla balaaaaa!"
+  //   })
+  //   console.log('Done: test-channel')
+  // }
 
   async function CheckLogin() {
     dispatch(setLoading(true));
@@ -417,7 +417,7 @@ const CreateAccount = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Modal isOpen={showVmodal} onClose={() => setVmodal(false)} size="lg">
         <Modal.Content maxWidth="600">
           <Modal.CloseButton />
@@ -503,7 +503,7 @@ const CreateAccount = ({navigation}) => {
 
       <ScrollView>
         <Center w="100%">
-          <Box safeArea p="2" w="90%" maxW="350" py="8">
+          <Box safeArea p="2" w="90%" py="8">
             <TouchableOpacity onPress={()=>hadnleNotification()}>
             <Heading
               size="md"
@@ -653,14 +653,15 @@ const CreateAccount = ({navigation}) => {
                   layout="first"
                   onChangeCountry={(res)=>setCountryCode(res.cca2)}
                   containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
-                  codeTextStyle={{height:"150%",}}
+                  codeTextStyle={width > 700 ? {width:100, textAlign:"center", marginLeft:-40, paddingTop:12, height:50, fontSize:20} : {height:"150%", paddingTop:3}}
                   textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
                 />
                 <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
-                  <View style={{width:"55%",  marginLeft:'45%'}}>
+                  <View style={width > 700 ? {width:"65%",  marginLeft:'35%'} : {width:"55%",  marginLeft:'45%'}}>
                   <Input 
                     variant="filled" 
                     width={"100%"}
+                    height={'12'}
                     justifyContent={"flex-end"}
                     bg="#f3f3f3"
                     mt={0.5}
@@ -796,7 +797,7 @@ const CreateAccount = ({navigation}) => {
           </Box>
         </Center>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

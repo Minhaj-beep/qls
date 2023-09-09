@@ -206,8 +206,8 @@ const ViewLiveCourse = ({navigation}) => {
                 console.log('========All detailes of the course===========>', response)
                 dispatch(setFullCourseData(response.data))
                 setAllCourseData(response.data)
-                if (Object.keys(response.data.chapterList).length > 0) {
-                    SetChapterD(response.data.chapterList);
+                if (Object.keys(response.data.chapterList).length > 0 || Object.keys(response.data.assesmentList).length > 0) {
+                    CourseData.isLive ? SetChapterD(response.data.assesmentList) : SetChapterD(response.data.chapterList);
                 }
                 setIsComponentLoaded(true)
             } else {
@@ -420,6 +420,24 @@ const ViewLiveCourse = ({navigation}) => {
           </VStack>
         );
     };
+
+    const CLiveHeader = (section, index) => {
+        console.log('This is the data for live course curriculum:--------------------------------------------------> ', section)
+        return (
+            <VStack space={1} mt={2}>
+              <HStack alignItems={'center'} justifyContent={'space-between'}>
+                <Text color={'#000'} fontSize={14} fontWeight={'bold'}  maxW={width / 1.5}>Assessment {index + 1}</Text>
+                <Icon name={ index === ActiveSessions[0] ? 'chevron-up-outline' : 'chevron-down-outline' } size={20} color="#000" />
+              </HStack>
+              
+              {
+                  ChapterD.length !== index + 1 && index !== ActiveSessions[0] ? (
+                      <Divider mt={1} bg={'greyScale.800'} thickness={1} />
+                  ) : null
+              }
+            </VStack>
+        );
+    }
     
     const CBody = (dat, index) => { // Rendering accodion section contents
         const LessonData = dat.lessonList;
@@ -477,6 +495,45 @@ const ViewLiveCourse = ({navigation}) => {
           </View>
         );
     };
+
+    const CLiveBody = (dat, index) => {
+        console.log(dat, '____________________HERE ARE DATS___________________')
+        return (
+            <TouchableOpacity key={index}
+                            onPress={()=> {
+                                if (allCourseData.isPurchase) {
+                                        setResources([]);
+                                        navigation.navigate('Assessments');
+                                        dispatch(setAssessmentData({
+                                            Data: dat,
+                                            Type: 'Live',
+                                        }));
+                                }
+                            }}
+                        >
+                            <HStack justifyContent={'space-between'} mt={2}>
+                                <HStack space={2} alignItems="center">
+                                    <View>
+                                        {dat.isCompleted === false ? (
+                                            <Icon name="clipboard" color="#364b5b" style={{ backgroundColor: '#F0E1EB', padding: 5, borderRadius: 20, }} size={15} />
+                                        ) : null}
+                                        {dat.isCompleted === true ? (
+                                            <Image source={require('../../assets/CompletedTick.png')} alt="completed" size={7} />
+                                        ) : null}
+                                    </View>
+                                    <VStack>
+                                        <Text color={'#000'} maxWidth={width*0.7} fontSize={14} fontWeight={'bold'}>{dat.assessmentTitle}</Text>
+                                        {/* { data.isAssesment !== true && data.hasOwnProperty('lessonDuration') ?
+                                        <Text color={'greyScale.800'} fontSize={12} fontWeight={'bold'}>
+                                        {new Date(data.lessonDuration*1000).toISOString().substr(11, 8)}
+                                        </Text> : null} */}
+                                    </VStack>
+                                </HStack>
+                                <Icon name={allCourseData.isPurchase ? "lock-open" : "lock-closed"} size={17} style={{padding: 5}} color="#364b5b" />
+                            </HStack>
+                        </TouchableOpacity>
+        )
+    }
 
     const SetLCData = (data) => {
         if (data.liveStatus === 'INPROGRESS'){
@@ -695,8 +752,8 @@ const ViewLiveCourse = ({navigation}) => {
         const remainingTime = Date.parse(data.date) - Date.now();
         const sec = Math.floor((remainingTime) / 1000)
         const utcDate = new Date(data.date)
-        const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
-        const istDateTime = utcDate.toLocaleString('en-US', istOptions);
+        // const istOptions = { timeZone: 'Asia/Kolkata', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true };
+        const istDateTime = moment.utc(utcDate).local().format('ddd, MMM D YYYY, h:mm A');
     
         let now = new Date()
         const startDate = new Date(data.date)
@@ -1131,7 +1188,9 @@ const ViewLiveCourse = ({navigation}) => {
                         {/* Course Curriculum bar with course duration if exist */}
                         <HStack justifyContent={'space-between'} bg={'primary.100'} p={4} borderTopRadius={8}>
                             <Text fontSize={16} color={'secondary.50'}>Course Curriculum</Text>
-                            <HStack alignItems={'center'}>
+                            {
+                                !CourseData.isLive && (
+                                    <HStack alignItems={'center'}>
                                 <Icon name="time" size={20} color="#F0E1EB" />
                                 {
                                 allCourseData.totalCourseDuration !== null || allCourseData.totalCourseDuration !== 'undefined' ?
@@ -1141,6 +1200,8 @@ const ViewLiveCourse = ({navigation}) => {
                                 : <></>
                                 }
                             </HStack>
+                                )
+                            }
                         </HStack>
 
                         {/* Chapters if exist */}
@@ -1149,8 +1210,8 @@ const ViewLiveCourse = ({navigation}) => {
                                 <Accordion
                                     sections={ChapterD}
                                     activeSections={ActiveSessions}
-                                    renderHeader={CHeader}
-                                    renderContent={CBody}
+                                    renderHeader={CourseData.isLive ? CLiveHeader : CHeader}
+                                    renderContent={CourseData.isLive ? CLiveBody : CBody}
                                     onChange={CollapsibleChange}
                                     underlayColor={'#FFF'}
                                 />
@@ -1278,7 +1339,7 @@ const ViewLiveCourse = ({navigation}) => {
                             Resources.map((data, i)=>{
                             return (
                                 <View key={i}>
-                                <ResoucreFile props={data}/>
+                                <ResoucreFile props={data} index={i}/>
                                 </View>
                             );
                             })

@@ -15,6 +15,7 @@ import { GetCart } from '../Functions/API/GetCart';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BaseURL } from '../StaticData/Variables';
 import { setNotificationCount } from '../Redux/Features/authSlice';
+import { getStatusBarHeight } from 'react-native-status-bar-height'
 
 const {width, height} = Dimensions.get('window');
 
@@ -105,7 +106,7 @@ const AppBar = ({props}) => {
   }
 
   return (
-    <SafeAreaView>
+    <View style={{marginTop:getStatusBarHeight()}}>
       <VStack>
         <HStack style={styles.container} ml={2} mr={2} mt={1}>
           <HStack style={{flex: 1, alignItems: 'center'}}>
@@ -202,7 +203,7 @@ const AppBar = ({props}) => {
           </HStack>
         </HStack>
       </VStack>
-    </SafeAreaView>
+    </View>
   );
 };
 

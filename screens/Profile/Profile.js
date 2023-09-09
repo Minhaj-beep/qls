@@ -234,7 +234,7 @@ const Profile = ({navigation}) => {
   }, [0]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Navbar props={AppBarContent} />
       {load ? 
         <></>
@@ -397,20 +397,21 @@ const Profile = ({navigation}) => {
               defaultCode={`${countryCode}`}
               layout="first"
               textContainerStyle={{height:50, backgroundColor:"#f3f3f3",}}
-              codeTextStyle={{height:"150%",}}
+              codeTextStyle={width > 700 ? {width:100, textAlign:"center", marginLeft:-40, paddingTop:12, height:50, fontSize:20} : {height:"150%", paddingTop:3}}
               containerStyle={{width:"100%", backgroundColor:"#f3f3f3", color:"black", height:50, }}
               onChangeCountry={(country)=>setCountryCode(country.cca2)}
             />
-            <View style={{width:"100%",  flexDirection:"row", position:"absolute"}}>
-                <View style={{width:"60%",  marginLeft:'40%'}}>
+            <View style={{width:"100%", marginLeft:-6,  flexDirection:"row", position:"absolute"}}>
+                <View style={width > 700 ? {width:"70%",  marginLeft:'30%'} : {width:"60%",  marginLeft:'40%'}}>
 
                 <Input 
                 variant="filled" 
                 width={"100%"}
+                height={'12'}
                 justifyContent={"flex-end"}
                 bg="#f3f3f3"
                 mt={0.5}
-                value={MobileNo} 
+                value={MobileNo.slice(-10)} 
                 ref={mobileNumberRef}
                 placeholder="Enter Mobile No."
                 onChangeText={text => {
@@ -603,7 +604,7 @@ const Profile = ({navigation}) => {
       </ScrollView>
       </>
     }
-    </SafeAreaView>
+    </View>
   );
 };
 

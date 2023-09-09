@@ -29,7 +29,7 @@ const Purchaged = ({props}) => {
                             </Center>
                             <VStack style={styles.CardContent} space={1}>
                                 <HStack justifyContent="space-between" alignItems="center" space={2}>
-                                    <Text noOfLines={2} style={{ fontSize: 14, fontWeight: 'bold', color: '#000000', maxWidth: width * 0.75,}}>{data.assessmentTitle}</Text>
+                                    <Text noOfLines={2} style={{ fontSize: 14, fontWeight: 'bold', color: '#000000', maxWidth: width * 0.5,}}>{data.assessmentTitle}</Text>
                                 </HStack>
                                 <HStack space={2} alignItems={'center'}>
                                     <HStack space={1} alignItems={'center'}>
@@ -38,8 +38,8 @@ const Purchaged = ({props}) => {
                                     </HStack>
                                 </HStack>
                             </VStack>
-                            <VStack mr={3} alignItems={'center'}>
-                                <Text noOfLines={1} mt={1} style={{ fontSize: 12, padding:2, fontWeight: 'bold', color: '#395061', maxWidth: width * 0.75,}}>Attend Now</Text>
+                            <VStack mr={3} flex={1} alignItems={'center'}>
+                                <Text alignSelf={'flex-end'} noOfLines={1} mt={1} style={{ fontSize: 12, padding:0, fontWeight: 'bold', color: '#395061', maxWidth: width * 0.75,}}>Attend Now</Text>
                             </VStack>
                         </HStack>
                     </TouchableOpacity>
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
       borderRadius: 5,
     },
     CardContent: {
-      minWidth: width / 1.7,
-      maxWidth:width*0.58
+    //   minWidth: width / 1.7,
+      width:width*0.52,
     },
 });

@@ -101,14 +101,14 @@ const AccountActivity = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.topContainer}>
+    <View style={styles.topContainer}>
       <Navbar props={AppBarContent} />
       <ScrollView style={styles.Container}>
         <View style={styles.Container}>
           <VStack mt={5}>{activity ? <RenderNotification /> : null}</VStack>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

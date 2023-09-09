@@ -13,7 +13,7 @@ const Invoice = ({props, orderId}) => {
     const JWT = useSelector(state => state.Auth.JWT);
     const GUser = useSelector(state => state.Auth.GUser);
     const [pdfUri, setPdfUri] = useState(null);
-    const courseList = Array.isArray(props.items) ? props.items : [props.items]
+    // const courseList = Array.isArray(props.items) ? props.items : [props.items]
     console.log('All props=================', props, orderId)
 
   const downloadInvoice = async () => {

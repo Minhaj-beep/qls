@@ -53,7 +53,7 @@ const AssessmentList = ({navigation}) => {
         );
     };
   return (
-    <SafeAreaView>
+    <View>
       <Navbar props={AppBarContent} />
       <ScrollView style={styles.container}>
       {
@@ -68,7 +68,7 @@ const AssessmentList = ({navigation}) => {
         : null
       }
     </ScrollView>
-   </SafeAreaView>
+   </View>
   );
 };
 

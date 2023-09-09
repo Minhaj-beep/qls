@@ -5,7 +5,7 @@ import { HStack,IconButton,Text,VStack, useToast } from 'native-base';
 
 const {width, height} = Dimensions.get('window');
 
-const ResoucreFile = ({props}) => {
+const ResoucreFile = ({props, index}) => {
     const data = props;
     const url = props.resourcePath;
     console.log(props);
@@ -23,7 +23,7 @@ const ResoucreFile = ({props}) => {
         }
     };
   return (
-    <View>
+    <View key={index}>
         <VStack
             ml={5} mt={5}
         >

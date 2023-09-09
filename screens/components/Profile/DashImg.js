@@ -181,12 +181,13 @@ export default function DashImg() {
                 alignContent="center">
                 {DImage && (
                   <Image
+                    alignSelf={'center'}
                     rounded={100}
                     size={150}
                     source={{uri: DImage}}
                     alt="profile-img"
                     mt="50"
-                    ml="50"
+                    // ml="50"
                     mb="10"
                   />
                 )}

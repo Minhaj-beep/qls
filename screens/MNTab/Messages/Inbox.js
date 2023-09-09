@@ -7,6 +7,7 @@ import InboxHead from './InboxHead';
 // import Chat from './Chat';
 import { useSelector } from 'react-redux';
 import { messageSocket } from '../../StaticData/MessageSocket';
+import Hyperlink from 'react-native-hyperlink';
 
 const {width, height} = Dimensions.get('window')
 
@@ -140,7 +141,10 @@ export default Inbox = ({route}) => {
                     </HStack>
                     {/* {
                         data.type === 'TEXT' ? */}
-                        <Text style={{fontSize:12, color:'#000000', maxWidth:width*0.85, alignSelf:'flex-start'}}>{data.message}</Text>
+                        <Hyperlink linkDefault={ true }>
+                            <Text style={{fontSize:12, color:'#000000', maxWidth:width*0.85, alignSelf:'flex-start'}}>{data.message}</Text>
+                        </Hyperlink>
+                        
                         {/* :
                         <HStack alignItems={"center"} bg={'#b5b5b5'} borderRadius={10} padding={2} width={'100%'}>
                             <IconButton

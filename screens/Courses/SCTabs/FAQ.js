@@ -11,7 +11,8 @@ const {width, height} = Dimensions.get('window');
 
 const FAQ = () => {
   const CourseDD = useSelector(state => state.Course.SCData);
-  const CourseData = CourseDD.CDD;  const email = useSelector(state => state.Auth.Mail);
+  const CourseData = CourseDD.CDD;  
+  const email = useSelector(state => state.Auth.Mail);
   const [FAQD, setFAQD] = useState();
   const [Answers, setAnswers] = useState();
   const [ActiveSessions, setActiveSessions] = useState([]);
@@ -22,9 +23,10 @@ const FAQ = () => {
   }, [CourseData]);
 
   const SetDiff = async () => {
+    // console.log(CourseDD)
     if (CourseData) {
       if (CourseData.isLive === true) {
-        GetFAQData(email, CourseData.liveCourseCode);
+        GetFAQData(email, CourseData.courseCode);
       } else {
         GetFAQData(email, CourseData.courseCode);
       }
@@ -35,7 +37,7 @@ const FAQ = () => {
     try {
       let response = await GetFAQ(mail, code);
       if (response.status === 200) {
-        // console.log('FAQ retrieved successfully');
+        console.log('FAQ retrieved successfully_______________________', response, email, code);
         let data = response.data;
         if (data.length !== 0) {
           let faq = data[0].faqList;

@@ -108,6 +108,7 @@ const ViewAssessment = () => {
   };
 
   useEffect(()=>{
+    // TryAssessmentAgain()
     if(isRetryIndependentAssessment){
       TryAssessmentAgain()
     }
@@ -142,7 +143,7 @@ const ViewAssessment = () => {
             {props.assessmentOrder}. {' '} {props.assessmentQuestion}
           </Text>
       <HStack space={6} m={2} justifyContent="space-between">
-        <View>
+        <View style={{maxWidth:"70%"}}>
           <Radio.Group size="sm" name="Radio01" colorScheme={'primary'} onChange={(value)=>{
             AnswerMap.set(props.assessmentOrder ,Choice[value]);
            }}>
@@ -190,9 +191,9 @@ const ViewAssessment = () => {
 
           </View>
         </HStack>
-        <Text fontSize={12} color={'greyScale.800'}>Answer: {props.assessmentAnswer}</Text>
+        {/* <Text fontSize={12} color={'greyScale.800'}>Answer: {props.assessmentAnswer}</Text> */}
       <HStack space={6} m={2} justifyContent="space-between">
-        <View>
+        <View style={{maxWidth:"70%"}}>
           <Radio.Group isDisabled size="sm" name="Radio01" colorScheme={'primary'} defaultValue={Choice.indexOf(props.givenAssessmentAnswer)} onChange={(value)=>{
             AnswerMap.set(props.assessmentOrder ,Choice[value]);
            }}>
@@ -287,9 +288,9 @@ const ViewAssessment = () => {
 
   
   return (
-    <SafeAreaView>
+    <View style={{flex:1}}>
       <Navbar props={AppBarContent} />
-      <VStack>
+      <VStack style={{flex:1}}>
         <ScrollView style={styles.container}>
          { SResult ?
           <View>
@@ -364,7 +365,7 @@ const ViewAssessment = () => {
           Submit
         </Button>
       </VStack>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -372,6 +373,7 @@ export default ViewAssessment;
 
 const styles = StyleSheet.create({
   container:{
-    height: height*0.87,
+    // height: height*0.87,
+    // flex:1
   },
 });

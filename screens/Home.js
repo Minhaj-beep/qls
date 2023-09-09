@@ -51,7 +51,7 @@ import {GetLCourses} from './Functions/API/GetLiveCourses';
 import AppLink from 'react-native-app-link'
 import axios from 'axios';
 import Categories from './components/Home/Categories'
-import PushNotification from 'react-native-push-notification'
+// import PushNotification from 'react-native-push-notification'
 // import {phone} from 'phone';
 
 const {width, height} = Dimensions.get('window');
@@ -78,21 +78,21 @@ const Home = ({navigation}) => {
     profileImgPath: 'https://ql-files.s3.ap-south-1.amazonaws.com/images/image-1676614220331.jpg'
   }
 
-  PushNotification.configure({
-    onNotification: function (notification) {
-      console.log("NOTIFICATION:", notification);
-      navigation.navigate('Inbox', {instructor: screenProps})
-    },
+  // PushNotification.configure({
+  //   onNotification: function (notification) {
+  //     console.log("NOTIFICATION:", notification);
+  //     navigation.navigate('Inbox', {instructor: screenProps})
+  //   },
 
-    onAction: function (notification) {
-      console.log("ACTION:", notification.action)
-      console.log("NOTIFICATION:", notification)
-    },
+  //   onAction: function (notification) {
+  //     console.log("ACTION:", notification.action)
+  //     console.log("NOTIFICATION:", notification)
+  //   },
 
-    onRegistrationError: function(err) {
-      console.error(err.message, err)
-    }
-  });
+  //   onRegistrationError: function(err) {
+  //     console.error(err.message, err)
+  //   }
+  // });
 
   const becomeAnInstructor = async() => {
     AppLink.maybeOpenURL('qlearninginstructor://', { 
@@ -111,7 +111,7 @@ const Home = ({navigation}) => {
   const Permissions = async () => {
     try {
       await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
+        sionsAndroid.PERMISSIONS.CAMERA,
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
       ]).then(res => {
@@ -386,14 +386,14 @@ const Home = ({navigation}) => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {loaded ? <Navbar props={AppBarContent} /> : <></>}
       <ScrollView
         contentContainerStyle={styles.TopContainer}
         nestedScrollEnabled={true}>
         {/* Top Banner */}
         <Container style={styles.topbanner} bg="white.100" mt="4">
-          <HStack style={styles.tophstack}>
+          <HStack alignSelf='center' alignItems='center' >
             <VStack p={2}>
               <Heading style={styles.tbtitle} size="lg">
                 Learn From Anywhere
@@ -406,6 +406,7 @@ const Home = ({navigation}) => {
               <Image
                 source={require('../assets/Home/TBman.png')}
                 alt="topbanner-image"
+                // size={200}
               />
             </View>
           </HStack>
@@ -499,7 +500,7 @@ const Home = ({navigation}) => {
           </VStack>
         </VStack>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -521,7 +522,7 @@ const styles = StyleSheet.create({
   },
   topbanner: {
     width: width / 0.3,
-    height: height / 5,
+    // height: height / 5,
     borderRadius: 10,
     shadowColor: 'rgba(0, 0, 0, 0.03)',
     shadowOffset: {
@@ -531,13 +532,14 @@ const styles = StyleSheet.create({
     shadowRadius: 21.951963424682617,
     shadowOpacity: 1,
     alignSelf: 'center',
+    // alignItems:"center"
   },
   tophstack: {
     width: width / 0.1,
   },
   tbtitle: {
     width: width / 2.1,
-    fontSize: 25,
+    fontSize: width > 700 ? 40 : 25,
     fontWeight: '600',
     fontStyle: 'normal',
     color: '#000000',
@@ -548,15 +550,15 @@ const styles = StyleSheet.create({
   },
   tbtext: {
     width: width / 2.2,
-    fontSize: 11,
+    fontSize: width > 700 ? 18 : 11,
     fontWeight: '500',
     fontStyle: 'normal',
     color: '#8C8C8C',
     paddingLeft: 15,
   },
   tbimage: {
-    width: width / 3.8,
-    height: height / 5.5,
-    marginTop: 15,
+    // width: width / 3.8,
+    // height: height / 5.5,
+    paddingVertical: 15,
   },
 });

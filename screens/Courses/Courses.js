@@ -77,7 +77,7 @@ const Courses = ({navigation}) => {
   
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <AppBar props={AppBarContent} />
       <ScrollView
         contentContainerStyle={styles.TopContainer}
@@ -117,7 +117,7 @@ const Courses = ({navigation}) => {
             </>
           }
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

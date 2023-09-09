@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Text } from 'native-base';
 import io from 'socket.io-client';
-import { RTCPeerConnection, RTCView, mediaDevices } from 'react-native-webrtc';
+// import { RTCPeerConnection, RTCView, mediaDevices } from 'react-native-webrtc';
 import Peer from 'react-native-peerjs'
 import {useDispatch,useSelector} from 'react-redux';
 import AppBar from '../components/Navbar';

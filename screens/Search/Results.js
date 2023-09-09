@@ -15,7 +15,7 @@ const Results = () => {
       } = useDisclose();
     const [SData, setSData] = useState();
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
        <Actionsheet isOpen={isOpen} onClose={onClose}>
         <Actionsheet.Content >
             <Box w="100%" px={4} justifyContent="center">
@@ -97,7 +97,7 @@ const Results = () => {
             <RCCard/>
         </VStack>
         </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
